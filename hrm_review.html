@@ -258,15 +258,17 @@
   .participants { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; flex: 1; }
 
   .p-chip {
-    display: flex; align-items: center; gap: 5px;
-    padding: 3px 9px 3px 5px;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px 3px 4px;
     border-radius: var(--radius-pill);
     font-size: 11px; font-weight: 500;
+    line-height: 1;
   }
   .p-chip-av {
-    width: 16px; height: 16px; border-radius: var(--radius-round);
+    width: 18px; height: 18px; border-radius: var(--radius-round);
     display: flex; align-items: center; justify-content: center;
-    font-size: 7px; font-weight: 700;
+    font-size: 7px; font-weight: 700; flex-shrink: 0;
+    line-height: 1;
   }
 
   .phase-badge {
@@ -415,8 +417,8 @@
   .attach-btn svg { width: 18px; height: 18px; }
 
   .input-box {
-    display: flex; gap: 8px; align-items: flex-end;
-    padding: 10px 10px 10px 10px;
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px 8px 8px 14px;
     border: 1.5px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--bg);
@@ -433,7 +435,9 @@
     font-size: 14px; line-height: 1.6; max-height: 200px;
     background: transparent; color: var(--text);
     font-family: var(--font-secondary); min-height: 22px;
+    overflow-y: auto; scrollbar-width: none;
   }
+  #doc-input::-webkit-scrollbar { display: none; }
   #doc-input::placeholder { color: var(--text-hint); }
 
   .send-btn {
@@ -656,7 +660,7 @@
           </svg>
         </div>
         <div class="empty-title">Симулятор обратной связи<br>от <span>стейкхолдеров</span></div>
-        <div class="empty-sub">Загрузи документ, ЧТЗ или идею — 10 персон ответят от своей роли в формате каздев-интервью</div>
+        <div class="empty-sub">Загрузи документ, ЧТЗ или идею — 10 персон ответят от своей роли в формате custdev-интервью</div>
         <div class="empty-steps">
           <div class="empty-step"><span class="step-num">1</span>Выбери персон</div>
           <div class="empty-step"><span class="step-num">2</span>Укажи фазу</div>
@@ -934,7 +938,7 @@ function clearChat() {
       </svg>
     </div>
     <div class="empty-title">Симулятор обратной связи<br>от <span>стейкхолдеров</span></div>
-    <div class="empty-sub">Загрузи документ, ЧТЗ или идею — 10 персон ответят от своей роли в формате каздев-интервью</div>
+    <div class="empty-sub">Загрузи документ, ЧТЗ или идею — 10 персон ответят от своей роли в формате custdev-интервью</div>
     <div class="empty-steps">
       <div class="empty-step"><span class="step-num">1</span>Выбери персон</div>
       <div class="empty-step"><span class="step-num">2</span>Укажи фазу</div>
