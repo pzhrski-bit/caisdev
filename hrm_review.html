@@ -76,8 +76,8 @@
 
   .logo {
     font-family: var(--font-primary);
-    font-size: 15px; font-weight: 700;
-    letter-spacing: -0.3px; line-height: 120%;
+    font-size: 15px; font-weight: 500;
+    letter-spacing: -0.05px; line-height: 120%;
     color: #ffffff;
     display: flex; align-items: center; gap: 6px;
   }
@@ -141,9 +141,9 @@
   }
 
   .section-label {
-    font-family: var(--font-primary);
-    font-size: 10px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.8px;
+    font-family: var(--font-secondary);
+    font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.75px;
     color: var(--text-hint);
     margin-bottom: 8px;
   }
@@ -303,8 +303,9 @@
   .empty-icon svg { width: 26px; height: 26px; color: var(--accent); opacity: 0.7; }
   .empty-title {
     font-family: var(--font-primary);
-    font-size: 18px; font-weight: 700; line-height: 130%;
+    font-size: 18px; font-weight: 500; line-height: 130%;
     color: var(--text); margin-bottom: 10px;
+    letter-spacing: -0.05px;
   }
   .empty-title span { color: var(--accent); }
   .empty-sub {
@@ -349,8 +350,8 @@
   .msg-right { flex: 1; min-width: 0; }
   .msg-name {
     font-family: var(--font-primary);
-    font-size: 11px; font-weight: 700; line-height: 120%;
-    margin-bottom: 6px; letter-spacing: 0.2px;
+    font-size: 11px; font-weight: 500; line-height: 120%;
+    margin-bottom: 6px; letter-spacing: -0.05px;
   }
   .msg-bubble {
     padding: 14px 16px;
@@ -365,9 +366,9 @@
   .msg-bubble ul, .msg-bubble ol { padding-left: 20px; margin: 4px 0 8px; }
   .msg-bubble li { margin-bottom: 5px; }
   .msg-bubble h1, .msg-bubble h2, .msg-bubble h3 {
-    font-family: var(--font-primary); font-weight: 700;
+    font-family: var(--font-primary); font-weight: 500;
     line-height: 130%; margin: 12px 0 6px;
-    font-size: 13px;
+    font-size: 13px; letter-spacing: -0.05px;
   }
   .msg-bubble h1:first-child, .msg-bubble h2:first-child, .msg-bubble h3:first-child { margin-top: 0; }
 
@@ -444,10 +445,10 @@
   /* ── Divider ── */
   .divider {
     display: flex; align-items: center; gap: 12px;
-    font-family: var(--font-primary);
-    font-size: 10px; font-weight: 700;
+    font-family: var(--font-secondary);
+    font-size: 11px; font-weight: 500;
     color: var(--text-hint);
-    text-transform: uppercase; letter-spacing: 0.6px;
+    text-transform: uppercase; letter-spacing: 0.75px;
   }
   .divider::before, .divider::after {
     content: ""; flex: 1; height: 1px; background: var(--border);
@@ -494,7 +495,8 @@
   }
   .modal-title {
     font-family: var(--font-primary);
-    font-size: 15px; font-weight: 700; color: var(--text);
+    font-size: 15px; font-weight: 500; color: var(--text);
+    letter-spacing: -0.05px;
   }
   .modal-close {
     width: 30px; height: 30px; border-radius: var(--radius-sm);
@@ -510,10 +512,10 @@
 
   .field { display: flex; flex-direction: column; gap: 7px; }
   .field-label {
-    font-family: var(--font-primary);
-    font-size: 11px; font-weight: 700;
+    font-family: var(--font-secondary);
+    font-size: 11px; font-weight: 500;
     color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.6px;
+    text-transform: uppercase; letter-spacing: 0.75px;
   }
   .field-input {
     height: 40px; padding: 0 12px;
@@ -705,19 +707,19 @@
 
 <script>
 const PERSONAS = [
-  {id:"hrd_l", label:"HRD крупной", short:"ХД", bg:"#dbeafe", color:"#1e40af",
+  {id:"hrd_l", label:"HRD, крупный бизнес", short:"ХД", bg:"#dbeafe", color:"#1e40af",
    prompt:"Ты HRD крупной компании (500+ сотрудников). Профессиональный и осторожный. Твои метрики: eNPS, текучесть в первые 6 мес., time-to-hire, % закрытия вакансий. Говоришь взвешенно, требуешь обоснований и согласований. Не лестишь."},
-  {id:"hrd_s", label:"HRD небольшой", short:"ХД", bg:"#dcfce7", color:"#15803d",
+  {id:"hrd_s", label:"HRD, малый бизнес", short:"ХД", bg:"#dcfce7", color:"#15803d",
    prompt:"Ты HRD небольшой компании (до 150 сотрудников). Гибкий и практичный. Сам закрываешь вакансии. Говоришь прямо, не любишь бюрократию и избыточный функционал. Не лестишь."},
   {id:"cb", label:"Специалист C&B", short:"CB", bg:"#fef9c3", color:"#854d0e",
    prompt:"Ты специалист C&B. Дотошный и точный. Работаешь с грейдами, бонусными схемами и льготами. Тебя интересует точность расчётов, исключения, интеграция с бухгалтерией. Не лестишь."},
-  {id:"ceo", label:"Ген. директор", short:"ГД", bg:"#fee2e2", color:"#991b1b",
+  {id:"ceo", label:"Генеральный директор", short:"ГД", bg:"#fee2e2", color:"#991b1b",
    prompt:"Ты Генеральный директор. Стратегический и краткий. Тебя интересует ROI, риски и бизнес-ценность. Не углубляешься в детали реализации. Говоришь жёстко и по делу."},
-  {id:"corp", label:"Корп. университет", short:"КУ", bg:"#ede9fe", color:"#5b21b6",
+  {id:"corp", label:"Директор по обучению", short:"ДО", bg:"#ede9fe", color:"#5b21b6",
    prompt:"Ты руководитель корпоративного университета. Думаешь о карьерных треках, обучении и компетенциях сотрудников. Вдумчивый и системный. Интересуешься связками HRM+обучение+оценка."},
-  {id:"ciso", label:"Безопасник", short:"СБ", bg:"#fce7f3", color:"#9d174d",
+  {id:"ciso", label:"Руководитель СБ", short:"СБ", bg:"#fce7f3", color:"#9d174d",
    prompt:"Ты CISO/руководитель СБ. Скептичный по умолчанию. Тебя интересует разграничение доступа, персданные, соответствие 152-ФЗ, логирование действий. Конкретный и жёсткий."},
-  {id:"dept", label:"Рук. подразделения", short:"РП", bg:"#d1fae5", color:"#065f46",
+  {id:"dept", label:"Руководитель подразделения", short:"РП", bg:"#d1fae5", color:"#065f46",
    prompt:"Ты руководитель бизнес-подразделения, не HR. Прагматичный и нетерпеливый. Тебя интересует удобство для нетехничного пользователя, минимум шагов, прозрачность по своей команде."},
   {id:"cfo", label:"CFO", short:"CF", bg:"#f3f4f6", color:"#374151",
    prompt:"Ты CFO. Аналитичный и точный. Тебя интересует бюджет, стоимость владения, корректность данных о ФОТ и бонусах, риски для финансовой отчётности."},
