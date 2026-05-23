@@ -795,9 +795,12 @@ const PERSONAS = [
 ];
 
 const PHASES = [
-  {id:"concept", label:"Концепция", desc:"смысл и стратегические цели"},
-  {id:"req", label:"Требования", desc:"полнота и применимость"},
-  {id:"ready", label:"Готовая функциональность", desc:"оценка от роли пользователя"},
+  {id:"concept", label:"Концепция", desc:"смысл и стратегические цели",
+   tooltip:"Персоны задают стратегические вопросы: зачем это нужно, какую проблему решает, есть ли альтернативы. Подходит для проверки идеи до детализации."},
+  {id:"req", label:"Требования", desc:"полнота и применимость",
+   tooltip:"Персоны проверяют полноту и применимость: все ли сценарии учтены, нет ли противоречий, понятно ли что именно реализовать. Подходит для ЧТЗ и user story."},
+  {id:"ready", label:"Готовая функциональность", desc:"оценка от роли пользователя",
+   tooltip:"Персоны оценивают как конечные пользователи: удобно ли, соответствует ли ожиданиям роли. Подходит для проверки перед релизом или демо."},
 ];
 
 let selectedPersonas = new Set();
@@ -881,6 +884,8 @@ function init() {
     btn.onclick = () => selectPhase(ph.id);
     btn.innerHTML = `<span class="phase-btn-title">${ph.label}</span><span class="phase-btn-desc">${ph.desc}</span>`;
     phases.appendChild(btn);
+    btn.addEventListener("mouseenter", () => showTooltip(btn, ph));
+    btn.addEventListener("mouseleave", hideTooltip);
   });
 }
 
