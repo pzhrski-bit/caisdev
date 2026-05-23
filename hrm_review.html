@@ -162,17 +162,17 @@
 
   #persona-tooltip {
     position: fixed;
-    width: 230px;
-    background: #1e1e2e;
-    color: rgba(255,255,255,0.88);
-    border-radius: var(--radius-md);
-    padding: 12px 14px;
-    font-size: 12px; line-height: 1.6;
+    width: 240px;
+    background: var(--surface);
+    color: var(--text-muted);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    font-size: 13px; line-height: 1.6;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.15s;
     z-index: 1000;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.06);
+    box-shadow: 0 4px 20px rgba(22,22,22,0.12), 0 0 0 1px rgba(22,22,22,0.06);
   }
   #persona-tooltip::before {
     content: "";
@@ -180,15 +180,16 @@
     right: 100%; top: 50%;
     transform: translateY(-50%);
     border: 6px solid transparent;
-    border-right-color: #1e1e2e;
+    border-right-color: var(--surface);
+    filter: drop-shadow(-2px 0 1px rgba(22,22,22,0.06));
   }
   #persona-tooltip.visible { opacity: 1; }
   .p-tooltip-title {
     font-family: var(--font-primary);
     font-size: 11px; font-weight: 500;
-    color: rgba(255,255,255,0.45);
+    color: var(--text-hint);
     letter-spacing: 0.3px;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     text-transform: uppercase;
   }
   .persona-item:hover { background: var(--bg); }
