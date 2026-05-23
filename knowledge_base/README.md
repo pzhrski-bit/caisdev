@@ -26,7 +26,8 @@ knowledge_base/
 │   └── user_roles.md           — Роли пользователей и их влияние на персон
 │
 └── 04_architecture/
-    └── high_level_arch.md      — Архитектура MVP и приоритеты разработки
+    ├── high_level_arch.md      — Архитектура MVP и приоритеты разработки
+    └── auth_and_sessions.md    — Auth, модель данных, сессии, шеринг, план реализации
 ```
 
 ---
@@ -37,8 +38,11 @@ knowledge_base/
 - `project_context.md` — полный контекст продукта
 - Прямые запросы к DeepSeek API (есть проблема CORS)
 
-## Первый приоритет
+## Текущий приоритет разработки
 
-1. Провести **ИПР-тест** (см. `01_product/validation_test_ipr.md`) — это главная проверка гипотезы
-2. Обновить промпты прототипа углублёнными профилями из `02_personas/hrm_deep_profiles.md`
-3. Добавить backend-прокси для решения CORS
+1. Настроить Supabase + реализовать auth (username + password, JWT)
+2. Сессии и история сообщений в PostgreSQL
+3. Шеринг сессий по ссылке (read-only)
+4. Экспорт в Google Sheets
+
+Подробный план — `04_architecture/auth_and_sessions.md`
