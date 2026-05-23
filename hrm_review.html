@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HRM Review — Панель заказчиков</title>
+<title>Каздев без каздева</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -17,9 +17,10 @@
 
     --bg: #f4f4f4;
     --surface: #ffffff;
-    --header-bg: #402781;
+    --header-bg: #1e1433;
 
     --border: #e0e0e0;
+    --border-strong: #c6c6c6;
 
     --text: #161616;
     --text-muted: #6f6f6f;
@@ -27,7 +28,11 @@
 
     --accent: #8a3ffc;
     --accent-hover: #6929c4;
-    --accent-light: #e8daff;
+    --accent-light: #f0e6ff;
+    --accent-subtle: #f5f0ff;
+
+    --green: #24a148;
+    --green-light: #defbe6;
 
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -35,7 +40,8 @@
     --radius-pill: 100px;
     --radius-round: 9999px;
 
-    --card-shadow: 0 1px 3px rgba(22,22,22,0.08), 0 0 0 1px rgba(22,22,22,0.04);
+    --card-shadow: 0 1px 3px rgba(22,22,22,0.08), 0 0 0 1px rgba(22,22,22,0.06);
+    --modal-shadow: 0 16px 48px rgba(22,22,22,0.22), 0 0 0 1px rgba(22,22,22,0.08);
   }
 
   body {
@@ -50,10 +56,10 @@
 
   .layout {
     display: grid;
-    grid-template-columns: 260px 1fr;
-    grid-template-rows: 56px 1fr;
+    grid-template-columns: 268px 1fr;
+    grid-template-rows: 52px 1fr;
     height: 100vh;
-    max-width: 1280px;
+    max-width: 1440px;
     margin: 0 auto;
   }
 
@@ -63,74 +69,69 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 0 20px 0 24px;
     background: var(--header-bg);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
 
   .logo {
     font-family: var(--font-primary);
-    font-size: 16px; font-weight: 700;
-    letter-spacing: -0.05px; line-height: 120%;
+    font-size: 15px; font-weight: 700;
+    letter-spacing: -0.3px; line-height: 120%;
     color: #ffffff;
+    display: flex; align-items: center; gap: 6px;
   }
-  .logo span { color: #be95ff; }
+  .logo-accent { color: #be95ff; }
+  .logo-divider {
+    width: 1px; height: 14px;
+    background: rgba(255,255,255,0.18);
+  }
+  .logo-sub {
+    font-size: 11px; font-weight: 400;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.3px;
+  }
 
-  .api-row { display: flex; align-items: center; gap: 8px; }
-  .api-row label { font-size: 12px; color: rgba(255,255,255,0.55); }
-  .mock-toggle {
-    display: flex; align-items: center; gap: 8px;
-    cursor: pointer;
-    font-size: 12px;
-    color: rgba(255,255,255,0.65) !important;
-    user-select: none;
-    transition: color 0.2s;
-  }
-  .mock-toggle:has(input:checked) { color: #be95ff !important; }
-  .mock-toggle input { display: none; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
 
-  .mock-track {
-    position: relative;
-    width: 32px; height: 18px; flex-shrink: 0;
-    background: rgba(255,255,255,0.15);
-    border-radius: 9px;
-    border: 1px solid rgba(255,255,255,0.2);
-    transition: background 0.2s, border-color 0.2s;
+  .api-indicator {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px 4px 8px;
+    border-radius: var(--radius-pill);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 11px; color: rgba(255,255,255,0.45);
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
   }
-  .mock-toggle:has(input:checked) .mock-track {
-    background: #8a3ffc;
-    border-color: #8a3ffc;
-  }
-  .mock-thumb {
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.6);
-    transition: transform 0.2s, background 0.2s;
-  }
-  .mock-toggle:has(input:checked) .mock-thumb {
-    transform: translateX(14px);
-    background: #ffffff;
-  }
-  .api-row input {
-    width: 240px; height: 32px; padding: 0 12px;
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: var(--radius-sm);
-    font-size: 12px; background: rgba(255,255,255,0.1);
-    color: #ffffff; font-family: monospace;
-  }
-  .api-row input::placeholder { color: rgba(255,255,255,0.35); }
-  .api-row input:focus { outline: none; border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.15); }
-
-  .api-status {
-    width: 8px; height: 8px; border-radius: 50%;
+  .api-indicator:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+  .api-indicator.ok { color: rgba(255,255,255,0.7); border-color: rgba(36,161,72,0.4); }
+  .api-dot {
+    width: 6px; height: 6px; border-radius: 50%;
     background: rgba(255,255,255,0.2); flex-shrink: 0;
+    transition: background 0.2s;
   }
-  .api-status.ok { background: #42be65; }
+  .api-indicator.ok .api-dot { background: #42be65; box-shadow: 0 0 0 2px rgba(66,190,101,0.25); }
+
+  .settings-btn {
+    width: 34px; height: 34px;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.55);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .settings-btn:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.22);
+    color: rgba(255,255,255,0.9);
+  }
+  .settings-btn svg { width: 16px; height: 16px; }
 
   /* ── Sidebar ── */
   aside {
-    background: var(--bg);
+    background: var(--surface);
     border-right: 1px solid var(--border);
     overflow-y: auto;
     padding: 16px;
@@ -139,80 +140,104 @@
     gap: 20px;
   }
 
-  .section-title {
+  .section-label {
     font-family: var(--font-primary);
-    font-size: 11px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.6px;
-    line-height: 120%;
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
     color: var(--text-hint);
     margin-bottom: 8px;
   }
 
-  .persona-list { display: flex; flex-direction: column; gap: 3px; }
+  .persona-list { display: flex; flex-direction: column; gap: 2px; }
 
   .persona-item {
     display: flex; align-items: center; gap: 10px;
-    padding: 8px 10px; border-radius: var(--radius-sm);
+    padding: 7px 10px; border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background 0.1s;
+    user-select: none;
   }
-  .persona-item:hover { background: rgba(0,0,0,0.04); }
-  .persona-item.selected {
-    background: var(--surface);
-    box-shadow: var(--card-shadow);
-  }
+  .persona-item:hover { background: var(--bg); }
+  .persona-item.selected { background: var(--accent-subtle); }
 
   .p-avatar {
-    width: 32px; height: 32px; border-radius: var(--radius-round);
+    width: 30px; height: 30px; border-radius: var(--radius-round);
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-primary);
-    font-size: 10px; font-weight: 700; flex-shrink: 0;
+    font-size: 9px; font-weight: 700; flex-shrink: 0;
+    letter-spacing: 0.3px;
   }
 
-  .p-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .p-info { flex: 1; min-width: 0; }
+  .p-name {
+    font-size: 12px; font-weight: 500; line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
 
   .p-check {
     width: 16px; height: 16px; border-radius: 4px;
-    border: 1.5px solid var(--border);
+    border: 1.5px solid var(--border-strong);
     background: var(--surface);
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    flex-shrink: 0; transition: background 0.1s, border-color 0.1s;
   }
   .persona-item.selected .p-check {
     background: var(--accent); border-color: var(--accent);
   }
   .persona-item.selected .p-check::after {
-    content: ""; display: block;
-    width: 8px; height: 5px;
+    content: "";
+    display: block;
+    width: 8px; height: 4px;
     border-left: 1.5px solid white;
     border-bottom: 1.5px solid white;
     transform: rotate(-45deg) translateY(-1px);
   }
 
-  .selected-count {
-    font-size: 12px; color: var(--text-muted);
-    padding: 6px 12px;
-    background: var(--surface);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--card-shadow);
-    text-align: center; margin-top: 8px;
+  .select-all-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2px; margin-bottom: 4px;
   }
+  .select-all-btn {
+    font-size: 11px; color: var(--accent);
+    background: none; border: none; cursor: pointer;
+    font-family: var(--font-secondary); padding: 2px 0;
+    transition: opacity 0.1s;
+  }
+  .select-all-btn:hover { opacity: 0.7; }
+
+  .selected-badge {
+    font-size: 11px; font-weight: 600;
+    color: var(--text-hint);
+    background: var(--bg);
+    padding: 2px 8px; border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+  }
+  .selected-badge.has-selected { color: var(--accent); border-color: var(--accent-light); background: var(--accent-subtle); }
 
   /* ── Phase buttons ── */
-  .phase-grid { display: flex; flex-direction: column; gap: 4px; }
+  .phase-grid { display: flex; flex-direction: column; gap: 3px; }
   .phase-btn {
-    padding: 8px 12px; border-radius: var(--radius-sm);
-    border: none; background: transparent;
-    cursor: pointer; font-size: 13px; text-align: left;
-    color: var(--text); font-family: var(--font-secondary);
-    transition: background 0.1s;
+    padding: 9px 12px; border-radius: var(--radius-sm);
+    border: 1px solid transparent; background: transparent;
+    cursor: pointer; font-size: 12px; text-align: left;
+    color: var(--text-muted); font-family: var(--font-secondary);
+    transition: background 0.1s, border-color 0.1s;
+    display: flex; flex-direction: column; gap: 2px;
   }
-  .phase-btn:hover { background: rgba(0,0,0,0.04); }
+  .phase-btn:hover { background: var(--bg); }
   .phase-btn.active {
-    background: var(--surface);
-    box-shadow: var(--card-shadow);
+    background: var(--accent-subtle);
+    border-color: rgba(138,63,252,0.2);
     color: var(--accent);
-    font-weight: 600;
+  }
+  .phase-btn-title { font-weight: 600; font-size: 13px; }
+  .phase-btn-desc { font-size: 11px; color: var(--text-hint); }
+  .phase-btn.active .phase-btn-desc { color: rgba(138,63,252,0.6); }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
   }
 
   /* ── Main ── */
@@ -222,83 +247,115 @@
   }
 
   .chat-header {
-    padding: 12px 24px;
+    padding: 10px 24px;
     background: var(--surface);
-    box-shadow: 0 1px 0 var(--border);
-    display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    min-height: 48px;
   }
 
-  .participants { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .participants { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; flex: 1; }
 
   .p-chip {
-    display: flex; align-items: center; gap: 6px;
-    padding: 4px 10px 4px 6px;
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 9px 3px 5px;
     border-radius: var(--radius-pill);
-    font-size: 12px; font-weight: 500;
+    font-size: 11px; font-weight: 500;
   }
   .p-chip-av {
-    width: 18px; height: 18px; border-radius: var(--radius-round);
+    width: 16px; height: 16px; border-radius: var(--radius-round);
     display: flex; align-items: center; justify-content: center;
-    font-size: 8px; font-weight: 700;
+    font-size: 7px; font-weight: 700;
   }
 
   .phase-badge {
     font-family: var(--font-primary);
-    font-size: 11px; font-weight: 600;
-    padding: 4px 12px; border-radius: var(--radius-pill);
+    font-size: 10px; font-weight: 700;
+    padding: 3px 10px; border-radius: var(--radius-pill);
     background: var(--accent-light);
     color: var(--accent);
-    text-transform: uppercase; letter-spacing: 0.4px;
-    margin-left: auto;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    white-space: nowrap;
+    border: 1px solid rgba(138,63,252,0.2);
   }
 
   /* ── Chat area ── */
   .chat-area {
     flex: 1; overflow-y: auto;
-    padding: 24px;
-    display: flex; flex-direction: column; gap: 16px;
+    padding: 28px 32px;
+    display: flex; flex-direction: column; gap: 20px;
   }
 
+  /* ── Empty state ── */
   .empty-state {
     flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 12px; color: var(--text-hint);
-    text-align: center; padding: 40px;
+    gap: 0; text-align: center; padding: 40px;
+    margin: auto 0;
   }
   .empty-icon {
-    width: 52px; height: 52px; border-radius: var(--radius-round);
+    width: 56px; height: 56px; border-radius: 18px;
     background: var(--surface);
     box-shadow: var(--card-shadow);
     display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
   }
-  .empty-icon svg { width: 24px; height: 24px; opacity: 0.4; }
+  .empty-icon svg { width: 26px; height: 26px; color: var(--accent); opacity: 0.7; }
   .empty-title {
     font-family: var(--font-primary);
-    font-size: 16px; font-weight: 600; line-height: 120%;
-    color: var(--text-muted);
+    font-size: 18px; font-weight: 700; line-height: 130%;
+    color: var(--text); margin-bottom: 10px;
   }
-  .empty-sub { font-size: 13px; max-width: 280px; }
+  .empty-title span { color: var(--accent); }
+  .empty-sub {
+    font-size: 13px; color: var(--text-muted);
+    max-width: 340px; line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .empty-steps {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    justify-content: center; max-width: 400px;
+  }
+  .empty-step {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    padding: 6px 12px 6px 8px;
+    font-size: 12px; color: var(--text-muted);
+    box-shadow: var(--card-shadow);
+  }
+  .step-num {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-family: var(--font-primary);
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
 
   /* ── Messages ── */
   .msg-wrap { display: flex; gap: 12px; align-items: flex-start; }
 
   .msg-avatar {
-    width: 36px; height: 36px; border-radius: var(--radius-round);
+    width: 34px; height: 34px; border-radius: var(--radius-round);
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-primary);
-    font-size: 10px; font-weight: 700; flex-shrink: 0;
+    font-size: 9px; font-weight: 700; flex-shrink: 0;
+    letter-spacing: 0.3px;
   }
 
   .msg-right { flex: 1; min-width: 0; }
   .msg-name {
     font-family: var(--font-primary);
-    font-size: 12px; font-weight: 600; line-height: 120%;
-    margin-bottom: 6px;
+    font-size: 11px; font-weight: 700; line-height: 120%;
+    margin-bottom: 6px; letter-spacing: 0.2px;
   }
   .msg-bubble {
     padding: 14px 16px;
-    border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
-    font-size: 13px; line-height: 1.7;
+    border-radius: 2px var(--radius-lg) var(--radius-lg) var(--radius-lg);
+    font-size: 13px; line-height: 1.75;
     background: var(--surface);
     box-shadow: var(--card-shadow);
   }
@@ -306,84 +363,91 @@
   .msg-bubble p:last-child { margin-bottom: 0; }
   .msg-bubble strong { font-weight: 600; }
   .msg-bubble ul, .msg-bubble ol { padding-left: 20px; margin: 4px 0 8px; }
-  .msg-bubble li { margin-bottom: 4px; }
+  .msg-bubble li { margin-bottom: 5px; }
   .msg-bubble h1, .msg-bubble h2, .msg-bubble h3 {
-    font-family: var(--font-primary); font-weight: 600;
-    line-height: 120%; margin: 10px 0 6px;
+    font-family: var(--font-primary); font-weight: 700;
+    line-height: 130%; margin: 12px 0 6px;
+    font-size: 13px;
   }
+  .msg-bubble h1:first-child, .msg-bubble h2:first-child, .msg-bubble h3:first-child { margin-top: 0; }
 
   .msg-user { display: flex; justify-content: flex-end; }
   .msg-user .msg-bubble {
-    background: var(--accent); color: white;
-    border-radius: var(--radius-lg) 4px var(--radius-lg) var(--radius-lg);
-    max-width: 70%; box-shadow: none;
+    background: var(--header-bg); color: rgba(255,255,255,0.92);
+    border-radius: var(--radius-lg) 2px var(--radius-lg) var(--radius-lg);
+    max-width: 65%; box-shadow: none;
+    font-size: 13px; line-height: 1.65;
+    white-space: pre-wrap;
   }
 
   /* ── Typing ── */
   .typing-wrap { display: flex; gap: 12px; align-items: flex-start; }
   .typing-bubble {
-    padding: 14px 16px;
-    border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
+    padding: 12px 16px;
+    border-radius: 2px var(--radius-lg) var(--radius-lg) var(--radius-lg);
     background: var(--surface);
     box-shadow: var(--card-shadow);
     display: flex; align-items: center; gap: 4px;
   }
-  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-hint); animation: pulse 1.2s infinite; }
-  .dot:nth-child(2) { animation-delay: .2s; }
-  .dot:nth-child(3) { animation-delay: .4s; }
-  @keyframes pulse { 0%,80%,100%{opacity:.25;} 40%{opacity:1;} }
+  .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-hint); animation: pulse 1.3s infinite; }
+  .dot:nth-child(2) { animation-delay: .22s; }
+  .dot:nth-child(3) { animation-delay: .44s; }
+  @keyframes pulse { 0%,80%,100%{opacity:.2; transform:scale(0.85);} 40%{opacity:1; transform:scale(1);} }
 
   /* ── Input area ── */
   .input-area {
-    padding: 16px 24px;
+    padding: 14px 24px 16px;
     background: var(--surface);
-    box-shadow: 0 -1px 0 var(--border);
+    border-top: 1px solid var(--border);
   }
 
   .input-box {
     display: flex; gap: 10px; align-items: flex-end;
     padding: 10px 10px 10px 16px;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     border-radius: var(--radius-md);
-    background: var(--surface);
-    transition: border-color 0.15s, box-shadow 0.15s;
+    background: var(--bg);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
   }
   .input-box:focus-within {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(138,63,252,0.12);
+    box-shadow: 0 0 0 3px rgba(138,63,252,0.1);
+    background: var(--surface);
   }
 
   #doc-input {
     flex: 1; border: none; outline: none; resize: none;
     font-size: 14px; line-height: 1.6; max-height: 200px;
     background: transparent; color: var(--text);
-    font-family: var(--font-secondary); min-height: 20px;
+    font-family: var(--font-secondary); min-height: 22px;
   }
   #doc-input::placeholder { color: var(--text-hint); }
 
   .send-btn {
-    width: 36px; height: 36px;
-    border-radius: var(--radius-pill);
+    width: 34px; height: 34px;
+    border-radius: var(--radius-sm);
     background: var(--accent); border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; transition: background 0.15s;
+    flex-shrink: 0; transition: background 0.15s, transform 0.1s;
   }
-  .send-btn:hover { background: var(--accent-hover); }
-  .send-btn:disabled { background: #c6c6c6; cursor: default; }
-  .send-btn svg { width: 16px; height: 16px; }
+  .send-btn:hover:not(:disabled) { background: var(--accent-hover); transform: scale(1.04); }
+  .send-btn:active:not(:disabled) { transform: scale(0.96); }
+  .send-btn:disabled { background: var(--border-strong); cursor: default; }
+  .send-btn svg { width: 14px; height: 14px; }
 
-  .hint {
-    font-size: 11px; color: var(--text-hint);
-    margin-top: 8px; text-align: center;
+  .input-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 8px;
   }
+  .hint { font-size: 11px; color: var(--text-hint); }
 
   /* ── Divider ── */
   .divider {
     display: flex; align-items: center; gap: 12px;
     font-family: var(--font-primary);
-    font-size: 11px; font-weight: 600;
+    font-size: 10px; font-weight: 700;
     color: var(--text-hint);
-    text-transform: uppercase; letter-spacing: 0.4px;
+    text-transform: uppercase; letter-spacing: 0.6px;
   }
   .divider::before, .divider::after {
     content: ""; flex: 1; height: 1px; background: var(--border);
@@ -392,60 +456,180 @@
   /* ── Clear button ── */
   .clear-btn {
     width: 100%; padding: 8px 20px;
-    border-radius: var(--radius-pill);
-    font-size: 13px; font-weight: 500;
+    border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 500;
     border: 1px solid var(--border);
-    background: var(--surface);
+    background: transparent;
     color: var(--text-muted); cursor: pointer;
     font-family: var(--font-secondary);
-    box-shadow: var(--card-shadow);
+    transition: background 0.1s, color 0.1s;
+  }
+  .clear-btn:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+  /* ── Settings Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(22,22,22,0.55);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.18s;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    width: 420px;
+    box-shadow: var(--modal-shadow);
+    transform: translateY(10px) scale(0.98);
+    transition: transform 0.18s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 24px 0;
+  }
+  .modal-title {
+    font-family: var(--font-primary);
+    font-size: 15px; font-weight: 700; color: var(--text);
+  }
+  .modal-close {
+    width: 30px; height: 30px; border-radius: var(--radius-sm);
+    border: none; background: transparent;
+    cursor: pointer; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
     transition: background 0.1s;
   }
-  .clear-btn:hover { background: #e8e8e8; }
+  .modal-close:hover { background: var(--bg); }
+  .modal-close svg { width: 14px; height: 14px; }
+
+  .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 20px; }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field-label {
+    font-family: var(--font-primary);
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.6px;
+  }
+  .field-input {
+    height: 40px; padding: 0 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px; background: var(--bg);
+    color: var(--text); font-family: monospace;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .field-input:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+  .field-hint { font-size: 11px; color: var(--text-hint); line-height: 1.5; }
+
+  .mock-toggle {
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; user-select: none;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-muted);
+    transition: color 0.2s;
+  }
+  .mock-toggle:has(input:checked) { color: var(--text); }
+  .mock-toggle input { display: none; }
+  .mock-track {
+    position: relative; width: 34px; height: 20px; flex-shrink: 0;
+    background: var(--border-strong); border-radius: 10px;
+    transition: background 0.2s;
+  }
+  .mock-toggle:has(input:checked) .mock-track { background: var(--accent); }
+  .mock-thumb {
+    position: absolute; top: 3px; left: 3px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    transition: transform 0.2s;
+  }
+  .mock-toggle:has(input:checked) .mock-thumb { transform: translateX(14px); }
+
+  .modal-divider { height: 1px; background: var(--border); margin: 0 -24px; }
+
+  .modal-footer {
+    padding: 16px 24px 22px;
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+  .btn-secondary {
+    height: 36px; padding: 0 16px;
+    border-radius: var(--radius-pill);
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border); cursor: pointer;
+    font-size: 13px; font-weight: 500;
+    font-family: var(--font-secondary);
+    transition: background 0.1s;
+  }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-primary {
+    height: 36px; padding: 0 20px;
+    border-radius: var(--radius-pill);
+    background: var(--accent); color: white;
+    border: none; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    font-family: var(--font-secondary);
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
 
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 </style>
 </head>
 <body>
 
 <div class="layout">
   <header>
-    <div class="logo">HRM <span>Review</span></div>
-    <div class="api-row">
-      <label class="mock-toggle" id="mock-label">
-        <input type="checkbox" id="mock-mode" onchange="toggleMock()" />
-        <span class="mock-track"><span class="mock-thumb"></span></span>
-        Тест без API
-      </label>
-      <label>Groq API key</label>
-      <input type="password" id="api-key" placeholder="gsk_..." oninput="checkKey()" />
-      <div class="api-status" id="api-status"></div>
+    <div class="logo">
+      Каздев
+      <span class="logo-accent">без каздева</span>
+      <span class="logo-divider"></span>
+      <span class="logo-sub">симулятор обратной связи</span>
+    </div>
+    <div class="header-right">
+      <div class="api-indicator" id="api-indicator" onclick="openSettings()">
+        <div class="api-dot" id="api-status"></div>
+        <span id="api-label">API не настроен</span>
+      </div>
+      <button class="settings-btn" onclick="openSettings()" title="Настройки">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
     </div>
   </header>
 
   <aside>
     <div>
-      <div class="section-title">Участники</div>
+      <div class="section-label">Стейкхолдеры</div>
+      <div class="select-all-row">
+        <button class="select-all-btn" id="select-all-btn" onclick="toggleSelectAll()">Выбрать всех</button>
+        <div class="selected-badge" id="selected-count">0 / 10</div>
+      </div>
       <div class="persona-list" id="persona-list"></div>
-      <div class="selected-count" id="selected-count" style="margin-top:8px;">Никто не выбран</div>
     </div>
 
     <div>
-      <div class="section-title">Фаза проекта</div>
+      <div class="section-label">Фаза проекта</div>
       <div class="phase-grid" id="phase-grid"></div>
     </div>
 
-    <div style="margin-top:auto;">
-      <button class="clear-btn" style="width:100%;" onclick="clearChat()">Очистить диалог</button>
+    <div class="sidebar-footer">
+      <button class="clear-btn" onclick="clearChat()">Очистить диалог</button>
     </div>
   </aside>
 
   <main>
     <div class="chat-header" id="chat-header">
       <div class="participants" id="participants-chips">
-        <span style="font-size:13px;color:var(--text-hint);">Выбери участников слева</span>
+        <span style="font-size:12px;color:var(--text-hint);">Выбери стейкхолдеров слева →</span>
       </div>
     </div>
 
@@ -453,11 +637,18 @@
       <div class="empty-state" id="empty-state">
         <div class="empty-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
         </div>
-        <div class="empty-title">Обсуждение не начато</div>
-        <div class="empty-sub">Выбери персон и фазу проекта, затем отправь документ или задачу</div>
+        <div class="empty-title">Симулятор обратной связи<br>от <span>стейкхолдеров</span></div>
+        <div class="empty-sub">Загрузи документ, ЧТЗ или идею — 10 персон ответят от своей роли в формате каздев-интервью</div>
+        <div class="empty-steps">
+          <div class="empty-step"><span class="step-num">1</span>Выбери персон</div>
+          <div class="empty-step"><span class="step-num">2</span>Укажи фазу</div>
+          <div class="empty-step"><span class="step-num">3</span>Отправь документ</div>
+        </div>
       </div>
     </div>
 
@@ -465,14 +656,51 @@
       <div class="input-box">
         <textarea id="doc-input" rows="1" placeholder="Вставь документ, задачу или идею для обсуждения..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
         <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>
-          <svg viewBox="0 0 24 24" fill="white">
-            <path d="M12 4l8 8-8 8M4 12h16" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7"/>
           </svg>
         </button>
       </div>
-      <div class="hint">Ctrl+Enter — отправить · Ответы идут последовательно от каждой персоны</div>
+      <div class="input-meta">
+        <span class="hint">Ctrl+Enter — отправить</span>
+        <span class="hint">Персоны отвечают последовательно</span>
+      </div>
     </div>
   </main>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal" onclick="closeSettingsOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Настройки</div>
+      <button class="modal-close" onclick="closeSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="field-label">Groq API key</label>
+        <input type="password" class="field-input" id="api-key" placeholder="gsk_..." oninput="checkKey()" autocomplete="off"/>
+        <div class="field-hint">Ключ сохраняется в localStorage — никуда не отправляется кроме Groq API</div>
+      </div>
+      <div class="modal-divider"></div>
+      <div class="field">
+        <label class="mock-toggle" id="mock-label">
+          <input type="checkbox" id="mock-mode" onchange="toggleMock()" />
+          <span class="mock-track"><span class="mock-thumb"></span></span>
+          Тест без API
+        </label>
+        <div class="field-hint">Генерирует шаблонные ответы локально — для проверки интерфейса без ключа</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeSettings()">Отмена</button>
+      <button class="btn-primary" onclick="closeSettings()">Готово</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -500,9 +728,9 @@ const PERSONAS = [
 ];
 
 const PHASES = [
-  {id:"concept", label:"Концепция", desc:"стратегические вопросы о смысле"},
+  {id:"concept", label:"Концепция", desc:"смысл и стратегические цели"},
   {id:"req", label:"Требования", desc:"полнота и применимость"},
-  {id:"ready", label:"Готовая функциональность", desc:"оценка как пользователь"},
+  {id:"ready", label:"Готовая функциональность", desc:"оценка от роли пользователя"},
 ];
 
 let selectedPersonas = new Set();
@@ -510,9 +738,20 @@ let selectedPhase = null;
 let isLoading = false;
 let isMock = false;
 
+function openSettings() {
+  document.getElementById("settings-modal").classList.add("open");
+}
+function closeSettings() {
+  document.getElementById("settings-modal").classList.remove("open");
+}
+function closeSettingsOutside(e) {
+  if (e.target === document.getElementById("settings-modal")) closeSettings();
+}
+
 function toggleMock() {
   isMock = document.getElementById("mock-mode").checked;
   updateSendBtn();
+  updateApiIndicator();
 }
 
 function mockResponse(persona) {
@@ -529,7 +768,7 @@ function mockResponse(persona) {
 
 **Оценка и вывод**
 
-Документ требует доработки — нужно доработать до следующей итерации. Готов обсуждать детали после уточнения базовых параметров.`;
+Требует доработки — нужно уточнить базовые параметры до следующей итерации. Готов обсуждать детали после их прояснения.`;
 }
 
 function init() {
@@ -541,7 +780,7 @@ function init() {
     item.onclick = () => togglePersona(p.id);
     item.innerHTML = `
       <div class="p-avatar" style="background:${p.bg};color:${p.color};">${p.short}</div>
-      <div class="p-name">${p.label}</div>
+      <div class="p-info"><div class="p-name">${p.label}</div></div>
       <div class="p-check" id="pc-${p.id}"></div>
     `;
     list.appendChild(item);
@@ -553,9 +792,23 @@ function init() {
     btn.className = "phase-btn";
     btn.id = "ph-" + ph.id;
     btn.onclick = () => selectPhase(ph.id);
-    btn.innerHTML = `<strong>${ph.label}</strong><br><span style="font-size:11px;color:var(--text-hint);">${ph.desc}</span>`;
+    btn.innerHTML = `<span class="phase-btn-title">${ph.label}</span><span class="phase-btn-desc">${ph.desc}</span>`;
     phases.appendChild(btn);
   });
+}
+
+function toggleSelectAll() {
+  if (selectedPersonas.size === PERSONAS.length) {
+    selectedPersonas.clear();
+  } else {
+    PERSONAS.forEach(p => selectedPersonas.add(p.id));
+  }
+  PERSONAS.forEach(p => {
+    document.getElementById("pi-" + p.id).classList.toggle("selected", selectedPersonas.has(p.id));
+  });
+  updateCount();
+  updateChips();
+  updateSendBtn();
 }
 
 function togglePersona(id) {
@@ -572,27 +825,30 @@ function selectPhase(id) {
   PHASES.forEach(ph => {
     document.getElementById("ph-" + ph.id).classList.toggle("active", ph.id === id);
   });
+  updateChips();
   updateSendBtn();
 }
 
 function updateCount() {
   const n = selectedPersonas.size;
-  document.getElementById("selected-count").textContent =
-    n === 0 ? "Никто не выбран" : `Выбрано: ${n} из ${PERSONAS.length}`;
+  const badge = document.getElementById("selected-count");
+  badge.textContent = `${n} / ${PERSONAS.length}`;
+  badge.classList.toggle("has-selected", n > 0);
+  const btn = document.getElementById("select-all-btn");
+  btn.textContent = n === PERSONAS.length ? "Снять всех" : "Выбрать всех";
 }
 
 function updateChips() {
   const c = document.getElementById("participants-chips");
   c.innerHTML = "";
   if (selectedPersonas.size === 0) {
-    c.innerHTML = `<span style="font-size:13px;color:var(--text-hint);">Выбери участников слева</span>`;
+    c.innerHTML = `<span style="font-size:12px;color:var(--text-hint);">Выбери стейкхолдеров слева →</span>`;
     return;
   }
   PERSONAS.filter(p => selectedPersonas.has(p.id)).forEach(p => {
     const chip = document.createElement("div");
     chip.className = "p-chip";
     chip.style.background = p.bg;
-    chip.style.borderColor = p.bg;
     chip.innerHTML = `<div class="p-chip-av" style="background:${p.color};color:white;">${p.short}</div><span style="color:${p.color};">${p.label}</span>`;
     c.appendChild(chip);
   });
@@ -606,6 +862,26 @@ function updateChips() {
   }
 }
 
+function updateApiIndicator() {
+  const val = document.getElementById("api-key").value.trim();
+  const indicator = document.getElementById("api-indicator");
+  const statusDot = document.getElementById("api-status");
+  const label = document.getElementById("api-label");
+
+  if (isMock) {
+    indicator.classList.remove("ok");
+    statusDot.style.background = "#f59e0b";
+    label.textContent = "Тест без API";
+  } else if (val.length > 10) {
+    indicator.classList.add("ok");
+    label.textContent = "API подключён";
+  } else {
+    indicator.classList.remove("ok");
+    statusDot.style.background = "";
+    label.textContent = "API не настроен";
+  }
+}
+
 function updateSendBtn() {
   const btn = document.getElementById("send-btn");
   const hasKey = isMock || document.getElementById("api-key").value.trim().length > 10;
@@ -614,9 +890,8 @@ function updateSendBtn() {
 
 function checkKey() {
   const val = document.getElementById("api-key").value.trim();
-  const st = document.getElementById("api-status");
-  st.classList.toggle("ok", val.length > 10);
   if (val.length > 10) localStorage.setItem("groq_key", val);
+  updateApiIndicator();
   updateSendBtn();
 }
 
@@ -633,9 +908,20 @@ function autoResize(el) {
 function clearChat() {
   const area = document.getElementById("chat-area");
   area.innerHTML = `<div class="empty-state" id="empty-state">
-    <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg></div>
-    <div class="empty-title">Обсуждение не начато</div>
-    <div class="empty-sub">Выбери персон и фазу проекта, затем отправь документ или задачу</div>
+    <div class="empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    </div>
+    <div class="empty-title">Симулятор обратной связи<br>от <span>стейкхолдеров</span></div>
+    <div class="empty-sub">Загрузи документ, ЧТЗ или идею — 10 персон ответят от своей роли в формате каздев-интервью</div>
+    <div class="empty-steps">
+      <div class="empty-step"><span class="step-num">1</span>Выбери персон</div>
+      <div class="empty-step"><span class="step-num">2</span>Укажи фазу</div>
+      <div class="empty-step"><span class="step-num">3</span>Отправь документ</div>
+    </div>
   </div>`;
 }
 
@@ -668,7 +954,7 @@ function addTyping(persona) {
     <div class="msg-avatar" style="background:${persona.bg};color:${persona.color};">${persona.short}</div>
     <div>
       <div class="msg-name" style="color:${persona.color};">${persona.label}</div>
-      <div class="typing-bubble" style="background:${persona.bg};border-color:${persona.bg};">
+      <div class="typing-bubble">
         <div class="dot"></div><div class="dot"></div><div class="dot"></div>
       </div>
     </div>`;
@@ -756,7 +1042,7 @@ async function sendMessage() {
     try {
       let reply;
       if (isMock) {
-        await new Promise(r => setTimeout(r, 800 + Math.random() * 600));
+        await new Promise(r => setTimeout(r, 700 + Math.random() * 500));
         reply = mockResponse(persona);
       } else {
         reply = await callDeepSeek(persona.prompt, userPrompt);
