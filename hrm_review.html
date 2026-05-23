@@ -160,10 +160,8 @@
     position: relative;
   }
 
-  .p-tooltip {
-    position: absolute;
-    left: calc(100% + 10px);
-    top: 50%; transform: translateY(-50%);
+  #persona-tooltip {
+    position: fixed;
     width: 230px;
     background: #1e1e2e;
     color: rgba(255,255,255,0.88);
@@ -172,12 +170,11 @@
     font-size: 12px; line-height: 1.6;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s, transform 0.15s;
-    transform: translateY(-50%) translateX(-4px);
-    z-index: 200;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.06);
+    transition: opacity 0.15s;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.06);
   }
-  .p-tooltip::before {
+  #persona-tooltip::before {
     content: "";
     position: absolute;
     right: 100%; top: 50%;
@@ -185,17 +182,14 @@
     border: 6px solid transparent;
     border-right-color: #1e1e2e;
   }
+  #persona-tooltip.visible { opacity: 1; }
   .p-tooltip-title {
     font-family: var(--font-primary);
     font-size: 11px; font-weight: 500;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.45);
     letter-spacing: 0.3px;
     margin-bottom: 5px;
     text-transform: uppercase;
-  }
-  .persona-item:hover .p-tooltip {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
   }
   .persona-item:hover { background: var(--bg); }
   .persona-item.selected { background: var(--accent-subtle); }
@@ -730,6 +724,8 @@
   </main>
 </div>
 
+<div id="persona-tooltip"><div class="p-tooltip-title" id="tooltip-title"></div><span id="tooltip-body"></span></div>
+
 <!-- Settings Modal -->
 <div class="modal-overlay" id="settings-modal" onclick="closeSettingsOutside(event)">
   <div class="modal">
@@ -809,6 +805,24 @@ let selectedPhase = null;
 let isLoading = false;
 let isMock = false;
 
+function showTooltip(el, p) {
+  const tt = document.getElementById("persona-tooltip");
+  document.getElementById("tooltip-title").textContent = p.label;
+  document.getElementById("tooltip-body").textContent = p.tooltip;
+  const rect = el.getBoundingClientRect();
+  tt.style.top = (rect.top + rect.height / 2 - tt.offsetHeight / 2) + "px";
+  tt.style.left = (rect.right + 10) + "px";
+  tt.classList.add("visible");
+  // корректируем если выходит за нижний край
+  const ttRect = tt.getBoundingClientRect();
+  if (ttRect.bottom > window.innerHeight - 8) {
+    tt.style.top = (window.innerHeight - ttRect.height - 8) + "px";
+  }
+}
+function hideTooltip() {
+  document.getElementById("persona-tooltip").classList.remove("visible");
+}
+
 function openSettings() {
   document.getElementById("settings-modal").classList.add("open");
 }
@@ -853,11 +867,9 @@ function init() {
       <div class="p-avatar" style="background:${p.bg};color:${p.color};">${p.short}</div>
       <div class="p-info"><div class="p-name">${p.label}</div></div>
       <div class="p-check" id="pc-${p.id}"></div>
-      <div class="p-tooltip">
-        <div class="p-tooltip-title">${p.label}</div>
-        ${p.tooltip}
-      </div>
     `;
+    item.addEventListener("mouseenter", () => showTooltip(item, p));
+    item.addEventListener("mouseleave", hideTooltip);
     list.appendChild(item);
   });
 
