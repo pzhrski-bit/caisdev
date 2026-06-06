@@ -102,9 +102,8 @@
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
     font-size: 11px; color: rgba(255,255,255,0.45);
-    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+    cursor: default; transition: background 0.15s, border-color 0.15s;
   }
-  .api-indicator:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
   .api-indicator.ok { color: rgba(255,255,255,0.7); border-color: rgba(36,161,72,0.4); }
   .api-dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -646,7 +645,7 @@
       <span class="logo-sub">симулятор обратной связи</span>
     </div>
     <div class="header-right">
-      <div class="api-indicator" id="api-indicator" onclick="openSettings()">
+      <div class="api-indicator" id="api-indicator">
         <div class="api-dot" id="api-status"></div>
         <span id="api-label">API не настроен</span>
       </div>
@@ -742,12 +741,6 @@
       </button>
     </div>
     <div class="modal-body">
-      <div class="field">
-        <label class="field-label">Groq API key</label>
-        <input type="password" class="field-input" id="api-key" placeholder="gsk_..." oninput="checkKey()" autocomplete="off"/>
-        <div class="field-hint">Ключ сохраняется в localStorage — никуда не отправляется кроме Groq API</div>
-      </div>
-      <div class="modal-divider"></div>
       <div class="field">
         <label class="mock-toggle" id="mock-label">
           <input type="checkbox" id="mock-mode" onchange="toggleMock()" />
@@ -968,7 +961,6 @@ function updateChips() {
 }
 
 function updateApiIndicator() {
-  const val = document.getElementById("api-key").value.trim();
   const indicator = document.getElementById("api-indicator");
   const statusDot = document.getElementById("api-status");
   const label = document.getElementById("api-label");
@@ -977,27 +969,16 @@ function updateApiIndicator() {
     indicator.classList.remove("ok");
     statusDot.style.background = "#f59e0b";
     label.textContent = "Тест без API";
-  } else if (val.length > 10) {
-    indicator.classList.add("ok");
-    label.textContent = "API подключён";
   } else {
-    indicator.classList.remove("ok");
+    indicator.classList.add("ok");
     statusDot.style.background = "";
-    label.textContent = "API не настроен";
+    label.textContent = "OpenRouter · Nemotron";
   }
 }
 
 function updateSendBtn() {
   const btn = document.getElementById("send-btn");
-  const hasKey = isMock || document.getElementById("api-key").value.trim().length > 10;
-  btn.disabled = selectedPersonas.size === 0 || !selectedPhase || isLoading || !hasKey;
-}
-
-function checkKey() {
-  const val = document.getElementById("api-key").value.trim();
-  if (val.length > 10) localStorage.setItem("groq_key", val);
-  updateApiIndicator();
-  updateSendBtn();
+  btn.disabled = selectedPersonas.size === 0 || !selectedPhase || isLoading;
 }
 
 function handleKey(e) {
@@ -1099,13 +1080,11 @@ function escHtml(text) {
 }
 
 async function callDeepSeek(systemPrompt, userMessage) {
-  const key = document.getElementById("api-key").value.trim();
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      apiKey: key,
-      model: "llama-3.1-8b-instant",
+      model: "nvidia/nemotron-3-super-120b-a12b:free",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }
@@ -1163,11 +1142,7 @@ async function sendMessage() {
   updateSendBtn();
 }
 
-const savedKey = localStorage.getItem("groq_key");
-if (savedKey) {
-  document.getElementById("api-key").value = savedKey;
-  checkKey();
-}
+updateApiIndicator();
 init();
 </script>
 </body>

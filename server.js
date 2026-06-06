@@ -5,13 +5,19 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+if (!OPENROUTER_API_KEY) {
+  console.error("OPENROUTER_API_KEY is not set. Create a .env file or set the env variable.");
+  process.exit(1);
+}
 
 const server = http.createServer(async (req, res) => {
   const cors = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type",
   };
 
   if (req.method === "OPTIONS") {
@@ -24,29 +30,23 @@ const server = http.createServer(async (req, res) => {
     let body = "";
     for await (const chunk of req) body += chunk;
 
-    let parsed;
-    try { parsed = JSON.parse(body); } catch {
+    let payload;
+    try { payload = JSON.parse(body); } catch {
       res.writeHead(400, { "Content-Type": "application/json", ...cors });
       res.end(JSON.stringify({ error: "Bad JSON" }));
       return;
     }
 
-    const { apiKey, ...payload } = parsed;
-    if (!apiKey) {
-      res.writeHead(401, { "Content-Type": "application/json", ...cors });
-      res.end(JSON.stringify({ error: "No API key" }));
-      return;
-    }
-    console.log(`[Auth] key="${apiKey.slice(0,12)}..." len=${apiKey.length}`);
-
     const upstream = JSON.stringify(payload);
     const options = {
-      hostname: "api.groq.com",
-      path: "/openai/v1/chat/completions",
+      hostname: "openrouter.ai",
+      path: "/api/v1/chat/completions",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + apiKey,
+        "Authorization": "Bearer " + OPENROUTER_API_KEY,
+        "HTTP-Referer": "https://caisdev.app",
+        "X-Title": "cAIsdev",
         "Content-Length": Buffer.byteLength(upstream),
       },
     };
@@ -55,14 +55,14 @@ const server = http.createServer(async (req, res) => {
       let data = "";
       upRes.on("data", c => data += c);
       upRes.on("end", () => {
-        console.log(`[DeepSeek] status=${upRes.statusCode} body=${data.slice(0, 300)}`);
+        console.log(`[OpenRouter] status=${upRes.statusCode}`);
         res.writeHead(upRes.statusCode, { "Content-Type": "application/json", ...cors });
         res.end(data);
       });
     });
 
     proxy.on("error", (err) => {
-      console.error(`[DeepSeek] network error: ${err.message}`);
+      console.error(`[OpenRouter] network error: ${err.message}`);
       res.writeHead(502, { "Content-Type": "application/json", ...cors });
       res.end(JSON.stringify({ error: err.message }));
     });
@@ -72,7 +72,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Serve static files
+  // Static files
   let filePath = req.url === "/" ? "/hrm_review.html" : req.url;
   filePath = path.join(__dirname, filePath);
 
@@ -84,7 +84,7 @@ const server = http.createServer(async (req, res) => {
     }
     const ext = path.extname(filePath);
     const mime = { ".html": "text/html", ".css": "text/css", ".js": "application/javascript" }[ext] || "text/plain";
-    res.writeHead(200, { "Content-Type": mime });
+    res.writeHead(200, { "Content-Type": mime, ...cors });
     res.end(data);
   });
 });
