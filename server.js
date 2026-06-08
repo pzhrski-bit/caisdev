@@ -1,94 +1,43 @@
-import http from "http";
-import https from "https";
-import fs from "fs";
+import express from "express";
+import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import authRouter from "./routes/auth.js";
+import chatRouter from "./routes/chat.js";
+import sessionsRouter from "./routes/sessions.js";
+import { getSharedSession } from "./routes/sessions.js";
+import uploadRouter from "./routes/upload.js";
+import { requireAuth } from "./middleware/auth.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-if (!OPENROUTER_API_KEY) {
-  console.error("OPENROUTER_API_KEY is not set. Create a .env file or set the env variable.");
+if (!process.env.OPENROUTER_API_KEY) {
+  console.error("OPENROUTER_API_KEY is not set");
+  process.exit(1);
+}
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is not set");
+  process.exit(1);
+}
+if (!process.env.JWT_SECRET) {
+  console.error("JWT_SECRET is not set");
   process.exit(1);
 }
 
-const server = http.createServer(async (req, res) => {
-  const cors = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
-  };
+const app = express();
 
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, cors);
-    res.end();
-    return;
-  }
+app.use(cors());
+app.use(express.json());
 
-  if (req.url === "/api/chat" && req.method === "POST") {
-    let body = "";
-    for await (const chunk of req) body += chunk;
+app.use("/api/auth", authRouter);
+app.use("/api/chat", requireAuth, chatRouter);
+app.use("/api/sessions", requireAuth, sessionsRouter);
+app.use("/api/upload", requireAuth, uploadRouter);
+app.get("/api/share/:token", getSharedSession);
 
-    let payload;
-    try { payload = JSON.parse(body); } catch {
-      res.writeHead(400, { "Content-Type": "application/json", ...cors });
-      res.end(JSON.stringify({ error: "Bad JSON" }));
-      return;
-    }
+app.use(express.static(__dirname));
+app.get("*", (req, res) => res.sendFile(path.join(__dirname, "hrm_review.html")));
 
-    const upstream = JSON.stringify(payload);
-    const options = {
-      hostname: "openrouter.ai",
-      path: "/api/v1/chat/completions",
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + OPENROUTER_API_KEY,
-        "HTTP-Referer": "https://caisdev.app",
-        "X-Title": "cAIsdev",
-        "Content-Length": Buffer.byteLength(upstream),
-      },
-    };
-
-    const proxy = https.request(options, (upRes) => {
-      let data = "";
-      upRes.on("data", c => data += c);
-      upRes.on("end", () => {
-        console.log(`[OpenRouter] status=${upRes.statusCode}`);
-        res.writeHead(upRes.statusCode, { "Content-Type": "application/json", ...cors });
-        res.end(data);
-      });
-    });
-
-    proxy.on("error", (err) => {
-      console.error(`[OpenRouter] network error: ${err.message}`);
-      res.writeHead(502, { "Content-Type": "application/json", ...cors });
-      res.end(JSON.stringify({ error: err.message }));
-    });
-
-    proxy.write(upstream);
-    proxy.end();
-    return;
-  }
-
-  // Static files
-  let filePath = req.url === "/" ? "/hrm_review.html" : req.url;
-  filePath = path.join(__dirname, filePath);
-
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end("Not found");
-      return;
-    }
-    const ext = path.extname(filePath);
-    const mime = { ".html": "text/html", ".css": "text/css", ".js": "application/javascript" }[ext] || "text/plain";
-    res.writeHead(200, { "Content-Type": mime, ...cors });
-    res.end(data);
-  });
-});
-
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));

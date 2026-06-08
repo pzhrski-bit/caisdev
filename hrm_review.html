@@ -633,9 +633,94 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+  /* Auth overlay */
+  .auth-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(22,22,22,0.7);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .auth-overlay.hidden { display: none; }
+  .auth-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    width: 360px;
+    box-shadow: var(--modal-shadow);
+  }
+  .auth-logo {
+    font-family: var(--font-primary);
+    font-size: 18px; font-weight: 600;
+    color: var(--header-bg);
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .auth-logo span { color: var(--accent); }
+  .auth-tabs {
+    display: flex; gap: 4px;
+    background: var(--bg);
+    padding: 4px; border-radius: var(--radius-sm);
+    margin-bottom: 24px;
+  }
+  .auth-tab {
+    flex: 1; padding: 8px;
+    border: none; background: transparent;
+    border-radius: 6px;
+    font-size: 13px; font-weight: 500;
+    font-family: var(--font-secondary);
+    color: var(--text-muted); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .auth-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .auth-field { margin-bottom: 16px; }
+  .auth-field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
+  .auth-field input {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px; font-family: var(--font-secondary);
+    outline: none; transition: border-color 0.15s;
+  }
+  .auth-field input:focus { border-color: var(--accent); }
+  .auth-error {
+    font-size: 12px; color: #dc2626;
+    margin-bottom: 12px; min-height: 18px;
+  }
+  .auth-submit {
+    width: 100%; padding: 11px;
+    background: var(--accent); color: white;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600;
+    font-family: var(--font-secondary);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .auth-submit:hover { background: var(--accent-hover); }
+  .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>
 </head>
 <body>
+
+<!-- Auth overlay -->
+<div class="auth-overlay hidden" id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">C<span>AI</span>SDEV</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Войти</button>
+      <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Зарегистрироваться</button>
+    </div>
+    <div class="auth-field">
+      <label>Логин</label>
+      <input type="text" id="auth-username" placeholder="username" autocomplete="username"/>
+    </div>
+    <div class="auth-field">
+      <label>Пароль</label>
+      <input type="password" id="auth-password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter') submitAuth()"/>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="auth-submit" id="auth-submit" onclick="submitAuth()">Войти</button>
+  </div>
+</div>
 
 <div class="layout">
   <header>
@@ -707,7 +792,8 @@
 
     <div class="input-area">
       <div class="input-box">
-        <button class="attach-btn" title="Прикрепить файл" onclick="alert('Загрузка файлов появится после подключения бэкенда')">
+        <input type="file" id="file-input" accept=".pdf,.docx,.xlsx,.xls,.pptx,.md,.txt" style="display:none" onchange="handleFileUpload(this)"/>
+        <button class="attach-btn" title="Прикрепить файл (PDF, DOCX, XLSX, PPTX, MD)" onclick="document.getElementById('file-input').click()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66L9.41 17.41a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
@@ -1082,7 +1168,7 @@ function escHtml(text) {
 async function callDeepSeek(systemPrompt, userMessage) {
   const res = await fetch("/api/chat", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(),
     body: JSON.stringify({
       model: "nvidia/nemotron-3-super-120b-a12b:free",
       messages: [
@@ -1117,6 +1203,9 @@ async function sendMessage() {
   addUserMsg(text);
   addDivider("Обсуждение · " + phaseLabel);
 
+  const sid = await ensureSession(selectedPhase, text);
+  await saveMessage(sid, "user", text);
+
   const userPrompt = `ФАЗА: ${phaseLabel}\n\n${text}\n\nДай обратную связь в 3 блоках:\n1. Первое впечатление (1-2 предложения)\n2. Вопросы и возражения (минимум 3 конкретных пункта)\n3. Оценка полноты и вывод\n\nОтвечай строго от своей роли, кратко и по делу. Не используй слова: промпт, LLM, агент, нейросеть.`;
 
   const active = PERSONAS.filter(p => selectedPersonas.has(p.id));
@@ -1132,6 +1221,7 @@ async function sendMessage() {
       }
       document.getElementById("chat-area").removeChild(typing);
       addPersonaMsg(persona, reply);
+      await saveMessage(sid, persona.id, reply);
     } catch (e) {
       document.getElementById("chat-area").removeChild(typing);
       addPersonaMsg(persona, "⚠ Ошибка: " + e.message);
@@ -1140,6 +1230,124 @@ async function sendMessage() {
 
   isLoading = false;
   updateSendBtn();
+}
+
+// ── Auth ──────────────────────────────────────────────
+let currentUser = null;
+let authTab = 'login';
+
+function getToken() { return localStorage.getItem('jwt'); }
+
+function switchAuthTab(tab) {
+  authTab = tab;
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-submit').textContent = tab === 'login' ? 'Войти' : 'Зарегистрироваться';
+  document.getElementById('auth-error').textContent = '';
+}
+
+async function submitAuth() {
+  const username = document.getElementById('auth-username').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  const btn = document.getElementById('auth-submit');
+
+  if (!username || !password) { errEl.textContent = 'Введи логин и пароль'; return; }
+
+  btn.disabled = true;
+  errEl.textContent = '';
+
+  try {
+    const res = await fetch(`/api/auth/${authTab}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Ошибка'; btn.disabled = false; return; }
+
+    localStorage.setItem('jwt', data.token);
+    localStorage.setItem('username', data.username);
+    currentUser = data.username;
+    document.getElementById('auth-overlay').classList.add('hidden');
+    document.getElementById('api-label').textContent = `${currentUser} · OpenRouter`;
+  } catch {
+    errEl.textContent = 'Ошибка сети';
+  }
+  btn.disabled = false;
+}
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() };
+}
+
+// ── Session save ───────────────────────────────────────
+let sessionId = null;
+
+async function ensureSession(phase, firstMessage) {
+  if (sessionId) return sessionId;
+  try {
+    const res = await fetch('/api/sessions', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ phase, title: firstMessage.slice(0, 60) })
+    });
+    const data = await res.json();
+    sessionId = data.id;
+  } catch { /* non-critical */ }
+  return sessionId;
+}
+
+async function saveMessage(sid, persona_id, content) {
+  if (!sid) return;
+  try {
+    await fetch(`/api/sessions/${sid}/messages`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ persona_id, content })
+    });
+  } catch { /* non-critical */ }
+}
+
+// ── File upload ────────────────────────────────────────
+async function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const btn = document.querySelector('.attach-btn');
+  btn.style.opacity = '0.5';
+
+  try {
+    const form = new FormData();
+    form.append('file', file);
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + getToken() },
+      body: form
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Ошибка загрузки файла'); return; }
+
+    const textarea = document.getElementById('doc-input');
+    textarea.value = `[${file.name}]\n\n${data.text}`;
+    autoResize(textarea);
+    textarea.focus();
+  } catch {
+    alert('Не удалось загрузить файл');
+  } finally {
+    btn.style.opacity = '';
+    input.value = '';
+  }
+}
+
+// ── Init ───────────────────────────────────────────────
+const token = getToken();
+if (!token) {
+  document.getElementById('auth-overlay').classList.remove('hidden');
+} else {
+  currentUser = localStorage.getItem('username') || '';
+  document.getElementById('api-label').textContent = `${currentUser} · OpenRouter`;
 }
 
 updateApiIndicator();
