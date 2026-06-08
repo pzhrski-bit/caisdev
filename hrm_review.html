@@ -827,7 +827,7 @@
       </button>
     </div>
     <div class="modal-body">
-      <div class="field">
+      <div class="field" id="mock-field" hidden>
         <label class="mock-toggle" id="mock-label">
           <input type="checkbox" id="mock-mode" onchange="toggleMock()" />
           <span class="mock-track"><span class="mock-thumb"></span></span>
@@ -1268,9 +1268,11 @@ async function submitAuth() {
 
     localStorage.setItem('jwt', data.token);
     localStorage.setItem('username', data.username);
+    localStorage.setItem('role', data.role || 'user');
     currentUser = data.username;
     document.getElementById('auth-overlay').classList.add('hidden');
     document.getElementById('api-label').textContent = `${currentUser} · OpenRouter`;
+    document.getElementById('mock-field').hidden = data.role !== 'admin';
   } catch {
     errEl.textContent = 'Ошибка сети';
   }
@@ -1348,6 +1350,7 @@ if (!token) {
 } else {
   currentUser = localStorage.getItem('username') || '';
   document.getElementById('api-label').textContent = `${currentUser} · OpenRouter`;
+  document.getElementById('mock-field').hidden = localStorage.getItem('role') !== 'admin';
 }
 
 updateApiIndicator();

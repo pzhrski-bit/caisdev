@@ -14,11 +14,11 @@ router.post("/register", async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 10);
     const { rows } = await db.query(
-      "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username",
+      "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username, role",
       [username.trim(), hash]
     );
-    const token = jwt.sign({ id: rows[0].id, username: rows[0].username }, process.env.JWT_SECRET, { expiresIn: "30d" });
-    res.json({ token, username: rows[0].username });
+    const token = jwt.sign({ id: rows[0].id, username: rows[0].username, role: rows[0].role }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    res.json({ token, username: rows[0].username, role: rows[0].role });
   } catch (e) {
     if (e.code === "23505") return res.status(409).json({ error: "Username already taken" });
     res.status(500).json({ error: "Server error" });
@@ -37,8 +37,8 @@ router.post("/login", async (req, res) => {
     if (!ok) return res.status(401).json({ error: "Invalid username or password" });
 
     await db.query("UPDATE users SET last_login = now() WHERE id = $1", [rows[0].id]);
-    const token = jwt.sign({ id: rows[0].id, username: rows[0].username }, process.env.JWT_SECRET, { expiresIn: "30d" });
-    res.json({ token, username: rows[0].username });
+    const token = jwt.sign({ id: rows[0].id, username: rows[0].username, role: rows[0].role }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    res.json({ token, username: rows[0].username, role: rows[0].role });
   } catch {
     res.status(500).json({ error: "Server error" });
   }
