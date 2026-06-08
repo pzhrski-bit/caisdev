@@ -112,6 +112,27 @@
   }
   .api-indicator.ok .api-dot { background: #42be65; box-shadow: 0 0 0 2px rgba(66,190,101,0.25); }
 
+  .user-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 6px 4px 12px;
+    border-radius: var(--radius-pill);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 11px; color: rgba(255,255,255,0.7);
+  }
+  .user-chip[hidden] { display: none; }
+  .logout-btn {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: transparent; border: none;
+    color: rgba(255,255,255,0.4);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .logout-btn:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.85); }
+  .logout-btn svg { width: 13px; height: 13px; }
+
   .settings-btn {
     width: 34px; height: 34px;
     border-radius: var(--radius-sm);
@@ -730,6 +751,16 @@
       <span class="logo-sub">симулятор обратной связи</span>
     </div>
     <div class="header-right">
+      <div class="user-chip" id="user-chip" hidden>
+        <span id="user-chip-name"></span>
+        <button class="logout-btn" id="logout-btn" onclick="logout()" title="Выйти">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
+      </div>
       <div class="api-indicator" id="api-indicator">
         <div class="api-dot" id="api-status"></div>
         <span id="api-label">API не настроен</span>
@@ -1271,12 +1302,44 @@ async function submitAuth() {
     localStorage.setItem('role', data.role || 'user');
     currentUser = data.username;
     document.getElementById('auth-overlay').classList.add('hidden');
-    document.getElementById('api-label').textContent = `${currentUser} · OpenRouter`;
+    document.getElementById('auth-username').value = '';
+    document.getElementById('auth-password').value = '';
+    updateUserChip();
     document.getElementById('mock-field').hidden = data.role !== 'admin';
+    loadLastSession();
   } catch {
     errEl.textContent = 'Ошибка сети';
   }
   btn.disabled = false;
+}
+
+function updateUserChip() {
+  const chip = document.getElementById('user-chip');
+  if (currentUser) {
+    document.getElementById('user-chip-name').textContent = currentUser;
+    chip.hidden = false;
+  } else {
+    chip.hidden = true;
+  }
+}
+
+function logout() {
+  localStorage.removeItem('jwt');
+  localStorage.removeItem('username');
+  localStorage.removeItem('role');
+  currentUser = null;
+  sessionId = null;
+  selectedPersonas.clear();
+  selectedPhase = null;
+  PERSONAS.forEach(p => document.getElementById('pi-' + p.id)?.classList.remove('selected'));
+  PHASES.forEach(ph => document.getElementById('ph-' + ph.id)?.classList.remove('active'));
+  updateCount();
+  updateChips();
+  updateSendBtn();
+  clearChat();
+  updateUserChip();
+  document.getElementById('mock-field').hidden = true;
+  document.getElementById('auth-overlay').classList.remove('hidden');
 }
 
 function authHeaders() {
@@ -1308,6 +1371,43 @@ async function saveMessage(sid, persona_id, content) {
       headers: authHeaders(),
       body: JSON.stringify({ persona_id, content })
     });
+  } catch { /* non-critical */ }
+}
+
+async function loadLastSession() {
+  try {
+    const res = await fetch('/api/sessions', { headers: authHeaders() });
+    if (!res.ok) return;
+    const sessions = await res.json();
+    if (sessions.length) await openSession(sessions[0].id);
+  } catch { /* non-critical */ }
+}
+
+async function openSession(id) {
+  try {
+    const res = await fetch(`/api/sessions/${id}`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const session = await res.json();
+    sessionId = session.id;
+
+    if (session.phase && PHASES.some(p => p.id === session.phase)) selectPhase(session.phase);
+
+    const personaIds = [...new Set(session.messages.filter(m => m.persona_id !== 'user').map(m => m.persona_id))];
+    personaIds.forEach(pid => {
+      if (PERSONAS.some(p => p.id === pid) && !selectedPersonas.has(pid)) togglePersona(pid);
+    });
+
+    clearChat();
+    const ph = PHASES.find(p => p.id === session.phase);
+    if (ph && session.messages.length) addDivider("Обсуждение · " + ph.label.toUpperCase());
+    for (const m of session.messages) {
+      if (m.persona_id === 'user') {
+        addUserMsg(m.content);
+      } else {
+        const persona = PERSONAS.find(p => p.id === m.persona_id);
+        if (persona) addPersonaMsg(persona, m.content);
+      }
+    }
   } catch { /* non-critical */ }
 }
 
@@ -1349,8 +1449,9 @@ if (!token) {
   document.getElementById('auth-overlay').classList.remove('hidden');
 } else {
   currentUser = localStorage.getItem('username') || '';
-  document.getElementById('api-label').textContent = `${currentUser} · OpenRouter`;
+  updateUserChip();
   document.getElementById('mock-field').hidden = localStorage.getItem('role') !== 'admin';
+  loadLastSession();
 }
 
 updateApiIndicator();
