@@ -55,24 +55,30 @@
     min-height: 100vh;
   }
 
+  body { display: flex; flex-direction: column; }
+
   .layout {
     display: grid;
     grid-template-columns: 268px 1fr;
-    grid-template-rows: 52px 1fr;
-    height: 100vh;
+    grid-template-rows: 1fr;
+    flex: 1;
+    min-height: 0;
     max-width: 1440px;
+    width: 100%;
     margin: 0 auto;
   }
 
   /* ── Header ── */
   header {
-    grid-column: 1 / -1;
+    width: 100%;
+    height: 52px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 20px 0 24px;
     background: var(--header-bg);
     border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
   }
 
   .logo {
@@ -763,8 +769,7 @@
   </div>
 </div>
 
-<div class="layout">
-  <header>
+<header>
     <div class="logo">
       <span class="logo-name">C<span class="logo-accent">AI</span>SDEV</span>
       <span class="logo-divider"></span>
@@ -801,7 +806,7 @@
       </button>
     </div>
   </header>
-
+<div class="layout">
   <aside>
     <div>
       <div class="section-label">Стейкхолдеры</div>
