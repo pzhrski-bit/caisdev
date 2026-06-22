@@ -1256,7 +1256,15 @@ function addTyping(persona) {
   return wrap;
 }
 
+function sanitizeAiText(text) {
+  // Remove Unicode replacement chars and zero-width/invisible chars from AI output
+  return text
+    .normalize("NFC")
+    .replace(/[\uFFFD\uFFFE\uFFFF]/g, "")
+    .replace(/[\u200B-\u200F\u202A-\u202F\u2060\uFEFF\u00AD]/g, "");
+}
 function addPersonaMsg(persona, text) {
+  text = sanitizeAiText(text);
   const area = document.getElementById("chat-area");
   const wrap = document.createElement("div");
   wrap.className = "msg-wrap";
