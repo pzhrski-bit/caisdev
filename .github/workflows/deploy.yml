@@ -36,3 +36,31 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/pzhrski-bit/caisdev:${{ steps.vars.outputs.tag }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'main'
+
+    steps:
+      - name: Deploy to VPS
+        env:
+          VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          sudo apt-get install -y sshpass
+          sshpass -p "$VPS_PASSWORD" ssh \
+            -o StrictHostKeyChecking=no \
+            -o PreferredAuthentications=password \
+            -o PubkeyAuthentication=no \
+            "$VPS_USER@$VPS_HOST" bash -s <<'REMOTE'
+          docker pull ghcr.io/pzhrski-bit/caisdev:latest
+          docker stop caisdev || true
+          docker rm caisdev || true
+          docker run -d --name caisdev --restart unless-stopped \
+            --env-file /root/.env \
+            -p 80:3000 \
+            ghcr.io/pzhrski-bit/caisdev:latest
+          docker ps --filter name=caisdev --format "{{.Names}} {{.Status}}"
+          REMOTE

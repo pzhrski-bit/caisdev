@@ -151,6 +151,25 @@
   }
   .settings-btn svg { width: 16px; height: 16px; }
 
+  .export-btn {
+    height: 34px; padding: 0 12px;
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    color: rgba(255,255,255,0.55);
+    font-size: 12px; font-weight: 500;
+    font-family: var(--font-secondary);
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .export-btn:hover {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.22);
+    color: rgba(255,255,255,0.9);
+  }
+  .export-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
   /* ── Sidebar ── */
   aside {
     background: var(--surface);
@@ -766,6 +785,14 @@
         <div class="api-dot" id="api-status"></div>
         <span id="api-label">API не настроен</span>
       </div>
+      <button class="export-btn" id="export-btn" onclick="exportCSV()" title="Скачать сессию как CSV" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Экспорт
+      </button>
       <button class="settings-btn" id="settings-btn" onclick="openSettings()" title="Настройки" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <circle cx="12" cy="12" r="3"/>
@@ -791,7 +818,7 @@
     </div>
 
     <div class="sidebar-footer">
-      <button class="clear-btn" onclick="clearChat()">Очистить диалог</button>
+      <button class="clear-btn" onclick="startNewSession()">Очистить диалог</button>
     </div>
   </aside>
 
@@ -1090,7 +1117,7 @@ function updateApiIndicator() {
   } else {
     indicator.classList.add("ok");
     statusDot.style.background = "";
-    label.textContent = "OpenRouter · Nemotron";
+    label.textContent = "Gemini 2.5 Flash";
   }
 }
 
@@ -1107,6 +1134,61 @@ function autoResize(el) {
   el.style.height = "auto";
   el.style.height = Math.min(el.scrollHeight, 200) + "px";
   updateSendBtn();
+}
+
+function syncExportBtn() {
+  document.getElementById('export-btn').hidden = !sessionId;
+}
+
+function startNewSession() {
+  sessionId = null;
+  syncExportBtn();
+  clearChat();
+}
+
+async function exportCSV() {
+  if (!sessionId) return;
+  const btn = document.getElementById('export-btn');
+  const origText = btn.innerHTML;
+  btn.style.opacity = '0.6';
+
+  try {
+    const res = await fetch(`/api/sessions/${sessionId}`, { headers: authHeaders() });
+    if (!res.ok) { alert('Не удалось загрузить данные сессии'); return; }
+    const session = await res.json();
+
+    const phase = PHASES.find(p => p.id === session.phase)?.label || session.phase || '';
+    const date = new Date(session.created_at).toLocaleDateString('ru-RU');
+    const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+    const rows = [];
+    rows.push([esc('Сессия'), esc(session.title)]);
+    rows.push([esc('Дата'), esc(date)]);
+    rows.push([esc('Фаза'), esc(phase)]);
+    rows.push(['', '']);
+    rows.push([esc('Участник'), esc('Ответ')]);
+
+    for (const m of (session.messages || [])) {
+      const name = m.persona_id === 'user'
+        ? 'Пользователь'
+        : (PERSONAS.find(p => p.id === m.persona_id)?.label || m.persona_id);
+      rows.push([esc(name), esc(m.content)]);
+    }
+
+    const csv = '﻿' + rows.map(r => r.join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeName = (session.title || 'сессия').replace(/[^\wа-яА-Я]/g, '_').slice(0, 40);
+    a.download = `caisdev_${safeName}_${date.replace(/\./g, '-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch {
+    alert('Ошибка при экспорте');
+  } finally {
+    btn.style.opacity = '';
+  }
 }
 
 function clearChat() {
@@ -1202,12 +1284,12 @@ async function callDeepSeek(systemPrompt, userMessage) {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({
-      model: "nvidia/nemotron-3-super-120b-a12b:free",
+      model: "gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }
       ],
-      max_tokens: 1000,
+      max_tokens: 1500,
       temperature: 0.7
     })
   });
@@ -1336,6 +1418,7 @@ function logout() {
   localStorage.removeItem('role');
   currentUser = null;
   sessionId = null;
+  syncExportBtn();
   selectedPersonas.clear();
   selectedPhase = null;
   PERSONAS.forEach(p => document.getElementById('pi-' + p.id)?.classList.remove('selected'));
@@ -1366,6 +1449,7 @@ async function ensureSession(phase, firstMessage) {
     });
     const data = await res.json();
     sessionId = data.id;
+    syncExportBtn();
   } catch { /* non-critical */ }
   return sessionId;
 }
@@ -1396,6 +1480,7 @@ async function openSession(id) {
     if (!res.ok) return;
     const session = await res.json();
     sessionId = session.id;
+    syncExportBtn();
 
     if (session.phase && PHASES.some(p => p.id === session.phase)) selectPhase(session.phase);
 

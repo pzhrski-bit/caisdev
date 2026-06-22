@@ -13,8 +13,8 @@ import { requireAuth } from "./middleware/auth.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 
-if (!process.env.OPENROUTER_API_KEY) {
-  console.error("OPENROUTER_API_KEY is not set");
+if (!process.env.GEMINI_API_KEY) {
+  console.error("GEMINI_API_KEY is not set");
   process.exit(1);
 }
 if (!process.env.DATABASE_URL) {

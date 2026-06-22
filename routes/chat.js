@@ -3,18 +3,16 @@ import https from "https";
 
 const router = Router();
 
-async function callOpenRouter(payload) {
+async function callGemini(payload) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
     const options = {
-      hostname: "openrouter.ai",
-      path: "/api/v1/chat/completions",
+      hostname: "generativelanguage.googleapis.com",
+      path: "/v1beta/openai/chat/completions",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + process.env.OPENROUTER_API_KEY,
-        "HTTP-Referer": "https://caisdev.app",
-        "X-Title": "cAIsdev",
+        "Authorization": "Bearer " + process.env.GEMINI_API_KEY,
         "Content-Length": Buffer.byteLength(body),
       },
     };
@@ -32,17 +30,17 @@ async function callOpenRouter(payload) {
 
 router.post("/", async (req, res) => {
   try {
-    let result = await callOpenRouter(req.body);
+    let result = await callGemini(req.body);
 
     if (result.status === 429) {
       await new Promise(r => setTimeout(r, 2000));
-      result = await callOpenRouter(req.body);
+      result = await callGemini(req.body);
     }
 
-    console.log(`[OpenRouter] status=${result.status}`);
+    console.log(`[Gemini] status=${result.status}`);
     res.status(result.status).json(JSON.parse(result.body));
   } catch (e) {
-    console.error("[OpenRouter] error:", e.message);
+    console.error("[Gemini] error:", e.message);
     res.status(502).json({ error: e.message });
   }
 });
