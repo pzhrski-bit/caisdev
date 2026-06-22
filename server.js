@@ -14,10 +14,7 @@ import { requireAuth } from "./middleware/auth.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 
-if (!process.env.OPENROUTER_API_KEY) {
-  console.error("OPENROUTER_API_KEY is not set");
-  process.exit(1);
-}
+// AI key stored in CF Worker secret — no key needed on VPS side
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is not set");
   process.exit(1);

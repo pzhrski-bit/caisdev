@@ -1,12 +1,16 @@
 import { Router } from "express";
 import https from "https";
+import http from "http";
 
 const router = Router();
 
-const MODEL = process.env.AI_MODEL || "google/gemini-2.5-flash";
+const MODEL = process.env.AI_MODEL || "gemini-2.5-flash";
 const MAX_TOKENS = 1500;
 
-async function callOpenRouter(messages, temperature) {
+// CF Worker URL proxies to Gemini outside RF
+const API_URL = process.env.AI_API_URL || "https://caisdev-gemini-proxy.pzhrski.workers.dev";
+
+async function callAI(messages, temperature) {
   const payload = {
     model: MODEL,
     messages,
@@ -15,18 +19,20 @@ async function callOpenRouter(messages, temperature) {
   };
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
+    const url = new URL(API_URL);
+    const lib = url.protocol === "https:" ? https : http;
     const options = {
-      hostname: "openrouter.ai",
-      path: "/api/v1/chat/completions",
+      hostname: url.hostname,
+      port: url.port || (url.protocol === "https:" ? 443 : 80),
+      path: url.pathname,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + process.env.OPENROUTER_API_KEY,
         "Content-Length": Buffer.byteLength(body),
       },
     };
 
-    const req = https.request(options, (res) => {
+    const req = lib.request(options, (res) => {
       let data = "";
       res.on("data", c => data += c);
       res.on("end", () => resolve({ status: res.statusCode, body: data }));
@@ -45,16 +51,16 @@ router.post("/", async (req, res) => {
 
   try {
     let result;
-    for (let attempt = 0; attempt < 4; attempt++) {
-      result = await callOpenRouter(messages, temperature);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      result = await callAI(messages, temperature);
       if (result.status !== 429) break;
-      await new Promise(r => setTimeout(r, (attempt + 1) * 4000));
+      await new Promise(r => setTimeout(r, (attempt + 1) * 3000));
     }
 
-    console.log(`[OpenRouter] model=${MODEL} status=${result.status}`);
+    console.log(`[AI] model=${MODEL} status=${result.status}`);
     res.status(result.status).json(JSON.parse(result.body));
   } catch (e) {
-    console.error("[OpenRouter] error:", e.message);
+    console.error("[AI] error:", e.message);
     res.status(502).json({ error: e.message });
   }
 });
