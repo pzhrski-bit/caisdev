@@ -3,16 +3,16 @@ import https from "https";
 
 const router = Router();
 
-async function callGemini(payload) {
+async function callOpenRouter(payload) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
     const options = {
-      hostname: "generativelanguage.googleapis.com",
-      path: "/v1beta/openai/chat/completions",
+      hostname: "openrouter.ai",
+      path: "/api/v1/chat/completions",
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer " + process.env.GEMINI_API_KEY,
+        "Authorization": "Bearer " + process.env.OPENROUTER_API_KEY,
         "Content-Length": Buffer.byteLength(body),
       },
     };
@@ -30,17 +30,17 @@ async function callGemini(payload) {
 
 router.post("/", async (req, res) => {
   try {
-    let result = await callGemini(req.body);
+    let result = await callOpenRouter(req.body);
 
     if (result.status === 429) {
       await new Promise(r => setTimeout(r, 2000));
-      result = await callGemini(req.body);
+      result = await callOpenRouter(req.body);
     }
 
-    console.log(`[Gemini] status=${result.status}`);
+    console.log(`[OpenRouter] status=${result.status}`);
     res.status(result.status).json(JSON.parse(result.body));
   } catch (e) {
-    console.error("[Gemini] error:", e.message);
+    console.error("[OpenRouter] error:", e.message);
     res.status(502).json({ error: e.message });
   }
 });

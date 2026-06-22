@@ -1284,7 +1284,7 @@ async function callDeepSeek(systemPrompt, userMessage) {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({
-      model: "gemini-2.5-flash",
+      model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }

@@ -26,7 +26,7 @@ cAIsdev/
 
 - **Frontend**: один HTML-файл, чистый JS, без фреймворков
 - **Backend**: Node.js 20+ / Express
-- **AI**: Google Gemini 2.5 Flash через OpenAI-compatible API (`generativelanguage.googleapis.com`)
+- **AI**: Google Gemini 2.5 Flash через OpenRouter (`openrouter.ai`) — прямой вызов Google заблокирован с VPS в РФ
 - **БД**: Supabase PostgreSQL (проект `xpnchrjgetjusrtrilmv`, регион eu-central-1)
 - **Деплой**: Docker → ghcr.io/pzhrski-bit/caisdev, VPS Beget (159.194.220.35)
 - **CI/CD**: GitHub Actions — push в main → сборка образа → автодеплой на VPS
@@ -34,7 +34,7 @@ cAIsdev/
 ## Переменные окружения (.env)
 
 ```
-GEMINI_API_KEY=...
+OPENROUTER_API_KEY=...
 DATABASE_URL=postgresql://...supabase.com.../postgres
 JWT_SECRET=...
 PORT=3000
@@ -122,4 +122,4 @@ sshpass -p '...' ssh root@159.194.220.35 "docker pull ghcr.io/pzhrski-bit/caisde
 - Не предлагать React/Vue/фреймворки — сознательный выбор чистого JS
 - Не трогать структуру персон без запроса — промпты тщательно выверены
 - Не добавлять монетизацию и аналитику использования без явного запроса
-- Не переключать AI-провайдера без запроса (сейчас Gemini 2.5 Flash — осознанный выбор)
+- Не переключать AI-провайдера без запроса (сейчас Gemini 2.5 Flash через OpenRouter — прямой вызов Google недоступен с VPS в РФ)
