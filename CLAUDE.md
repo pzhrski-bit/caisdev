@@ -35,6 +35,7 @@ cAIsdev/
 
 ```
 OPENROUTER_API_KEY=...
+AI_MODEL=google/gemini-2.5-flash   # менять только здесь — фронтенд не контролирует модель
 DATABASE_URL=postgresql://...supabase.com.../postgres
 JWT_SECRET=...
 PORT=3000

@@ -3,7 +3,16 @@ import https from "https";
 
 const router = Router();
 
-async function callOpenRouter(payload) {
+const MODEL = process.env.AI_MODEL || "google/gemini-2.5-flash";
+const MAX_TOKENS = 1500;
+
+async function callOpenRouter(messages, temperature) {
+  const payload = {
+    model: MODEL,
+    messages,
+    max_tokens: MAX_TOKENS,
+    ...(temperature !== undefined ? { temperature } : {}),
+  };
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
     const options = {
@@ -29,15 +38,20 @@ async function callOpenRouter(payload) {
 }
 
 router.post("/", async (req, res) => {
+  const { messages, temperature } = req.body;
+  if (!Array.isArray(messages)) {
+    return res.status(400).json({ error: "messages must be an array" });
+  }
+
   try {
-    let result = await callOpenRouter(req.body);
+    let result = await callOpenRouter(messages, temperature);
 
     if (result.status === 429) {
       await new Promise(r => setTimeout(r, 2000));
-      result = await callOpenRouter(req.body);
+      result = await callOpenRouter(messages, temperature);
     }
 
-    console.log(`[OpenRouter] status=${result.status}`);
+    console.log(`[OpenRouter] model=${MODEL} status=${result.status}`);
     res.status(result.status).json(JSON.parse(result.body));
   } catch (e) {
     console.error("[OpenRouter] error:", e.message);
