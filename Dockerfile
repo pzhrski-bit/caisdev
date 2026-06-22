@@ -4,6 +4,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY server.js .
 COPY hrm_review.html .
+COPY prompts.html .
 COPY db ./db
 COPY middleware ./middleware
 COPY routes ./routes
