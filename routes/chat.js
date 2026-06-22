@@ -1,14 +1,21 @@
 import { Router } from "express";
 import https from "https";
-import http from "http";
 
 const router = Router();
 
 const MODEL = process.env.AI_MODEL || "gemini-2.5-flash";
 const MAX_TOKENS = 1500;
+const API_URL = process.env.AI_API_URL;
+const PROXY_KEY = process.env.AI_PROXY_KEY;
 
-// CF Worker URL proxies to Gemini outside RF
-const API_URL = process.env.AI_API_URL || "https://caisdev-gemini-proxy.pzhrski.workers.dev";
+if (!API_URL) { console.error("AI_API_URL is not set"); process.exit(1); }
+if (!PROXY_KEY) { console.error("AI_PROXY_KEY is not set"); process.exit(1); }
+
+const parsedUrl = new URL(API_URL);
+if (parsedUrl.protocol !== "https:") {
+  console.error("AI_API_URL must use https://");
+  process.exit(1);
+}
 
 async function callAI(messages, temperature) {
   const payload = {
@@ -19,20 +26,19 @@ async function callAI(messages, temperature) {
   };
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(payload);
-    const url = new URL(API_URL);
-    const lib = url.protocol === "https:" ? https : http;
     const options = {
-      hostname: url.hostname,
-      port: url.port || (url.protocol === "https:" ? 443 : 80),
-      path: url.pathname,
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || 443,
+      path: parsedUrl.pathname + parsedUrl.search,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Content-Length": Buffer.byteLength(body),
+        "X-Proxy-Auth": PROXY_KEY,
       },
     };
 
-    const req = lib.request(options, (res) => {
+    const req = https.request(options, (res) => {
       let data = "";
       res.on("data", c => data += c);
       res.on("end", () => resolve({ status: res.statusCode, body: data }));
