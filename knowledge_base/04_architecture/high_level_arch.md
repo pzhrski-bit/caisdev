@@ -1,95 +1,70 @@
 # Верхнеуровневая архитектура — cAIsdev
 
-> Статус: черновик, принято на брейншторм-сессии 2026-05-16
+> Последнее обновление: 2026-06-22
 
 ---
 
-## Текущий прототип (v0)
+## Текущая архитектура (MVP реализован)
 
 ```
-Браузер → [прямой запрос] → DeepSeek API
+Браузер (hrm_review.html — HTML/CSS/JS)
+    ↓ JWT-авторизованные HTTP-запросы
+Express Backend (server.js, Node.js 20+)
+    ├── POST /api/auth/login|register  → bcrypt + JWT
+    ├── POST /api/chat                 → Gemini 2.5 Flash API
+    ├── POST /api/upload               → pdf-parse / mammoth / xlsx
+    ├── GET|POST /api/sessions         → Supabase PostgreSQL
+    └── GET /api/share/:token          → публичный доступ к сессии
 ```
 
-**Проблемы**:
-- CORS: DeepSeek API не принимает запросы напрямую из браузера (или принимает нестабильно)
-- API-ключ вводится в интерфейсе — небезопасно
-- Нет сохранения результатов
-- Нет загрузки файлов
+## Компоненты
 
----
+| Компонент | Технология | Статус |
+|-----------|-----------|--------|
+| Frontend | HTML/CSS/JS (без фреймворков) | ✅ |
+| Backend | Node.js / Express | ✅ |
+| Auth | Custom JWT + bcrypt | ✅ |
+| AI-провайдер | Gemini 2.5 Flash (OpenAI-compatible) | ✅ |
+| Файловый парсер | pdf-parse / mammoth / xlsx | ✅ (требует доработки) |
+| Экспорт | CSV-скачивание на фронте | ✅ |
+| БД | Supabase PostgreSQL | ✅ |
+| Шеринг | По токену (`/api/share/:token`) | ✅ |
+| Хостинг | VPS Beget, Docker | ✅ |
+| CI/CD | GitHub Actions → ghcr.io → VPS | ✅ |
 
-## Целевая архитектура MVP
+## Хранение данных
 
 ```
-Браузер (HTML/CSS/JS)
-    ↓ HTTP запросы
-Backend (Node.js или Python/FastAPI)
-    ├── /api/analyze    → DeepSeek API (или Claude API)
-    ├── /api/upload     → парсинг PDF/DOCX
-    ├── /api/export     → Google Sheets API
-    └── /api/session    → хранение сессий (в памяти или БД)
+users     — id, username, password_hash, role, created_at, last_login
+sessions  — id, user_id, phase, title, persona_set, created_at
+messages  — id, session_id, persona_id, content, created_at
+shares    — id, session_id, token, created_at
 ```
-
-### Компоненты
-
-| Компонент | Технология | Назначение |
-|-----------|-----------|-----------|
-| Frontend | HTML/CSS/JS (без фреймворков) | Интерфейс |
-| Backend | Node.js (Express) или Python (FastAPI) | Прокси + логика |
-| AI-провайдер | DeepSeek → позже Claude | Генерация ответов |
-| Файловый парсер | pdf-parse / mammoth (Node) | Извлечение текста |
-| Export | Google Sheets API | Сохранение результатов |
-| Хостинг | Railway / Render | Деплой |
-| Хранилище сессий | В памяти (MVP) → позже БД | История |
-
----
-
-## Приоритеты разработки
-
-### Итерация 1 — устранение блокеров
-1. Backend как прокси для DeepSeek API (решает CORS)
-2. Деплой на Railway или Render (доступ по ссылке)
-3. Загрузка файлов (PDF, DOCX, MD)
-
-### Итерация 2 — ключевые фичи
-4. Выбор роли пользователя (влияет на промпты)
-5. Выбор набора персон (HRM / KPI / HireFlow)
-6. Экспорт в Google Sheets
-7. Шеринг сессии по ссылке
-
-### Итерация 3 — расширение
-8. Режим дискуссии между персонами
-9. Переключение AI-провайдера (DeepSeek / Claude)
-10. История сессий
-
----
-
-## Решение по хранению данных
-
-**MVP**: localStorage в браузере + Google Sheets как основное хранилище
-- Никакой своей БД
-- Сессия живёт в браузере, результаты — в Sheets
-
-**Следующий шаг**: если нужна история между устройствами — минимальная БД (SQLite или PostgreSQL на Railway)
-
----
-
-## Авторизация
-
-**Текущее решение**: нет авторизации, доступ по прямой ссылке
-- Инструмент внутренний, угроза минимальна
-- Ссылку шарят внутри команды
-
-**Следующий шаг**: простой invite-link или env-переменная с паролем (без OAuth)
-
----
 
 ## AI-провайдер
 
-| Провайдер | Статус | Когда |
-|-----------|--------|-------|
-| DeepSeek (`deepseek-chat`) | Текущий | MVP |
-| Claude API (claude-sonnet-4-6) | Планируется | При масштабировании / если нужна лучшая точность |
-| GPT-4o | Резервный | По необходимости |
+| Провайдер | Статус |
+|-----------|--------|
+| Gemini 2.5 Flash (`generativelanguage.googleapis.com`) | **Текущий** |
+| DeepSeek | Был, заменён |
+| OpenRouter/Nemotron | Был, заменён |
 
-**Принцип совместимости**: DeepSeek API совместим с OpenAI SDK, поэтому смена провайдера — это изменение base_url и модели.
+Смена провайдера = изменить `hostname` + `path` в `routes/chat.js` и ключ в `.env`.
+
+## Деплой
+
+Push в `main` → GitHub Actions:
+1. Собирает Docker-образ
+2. Пушит в `ghcr.io/pzhrski-bit/caisdev:latest`
+3. SSH на VPS → `docker pull` + `docker run --env-file /root/.env`
+
+## Бэклог
+
+### Следующий приоритет — улучшение парсинга документов
+- PDF: убрать артефакты (page breaks, номера страниц)
+- PPTX: заменить xlsx-парсер на ZIP+XML
+- Обрезка текста: лимит ~12 000 символов
+
+### Затем
+- Режим дискуссии между персонами (опциональный переключатель)
+- Выбор набора персон (HRM / KPI / HireFlow)
