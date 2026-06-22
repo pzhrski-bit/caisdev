@@ -886,6 +886,13 @@
       </button>
     </div>
     <div class="modal-body">
+      <div class="field">
+        <a href="/prompts" style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;background:var(--accent-subtle);color:var(--accent);border-radius:8px;text-decoration:none;font-size:14px;font-weight:500;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Промпты персон
+        </a>
+        <div class="field-hint" style="margin-top:6px;">Настройте поведение персон под свои задачи</div>
+      </div>
       <div class="field" id="mock-field" hidden>
         <label class="mock-toggle" id="mock-label">
           <input type="checkbox" id="mock-mode" onchange="toggleMock()" />
@@ -1326,10 +1333,12 @@ async function sendMessage() {
   const sid = await ensureSession(selectedPhase, text);
   await saveMessage(sid, "user", text);
 
-  const userPrompt = `ФАЗА: ${phaseLabel}\n\n${text}\n\nДай обратную связь в 3 блоках:\n1. Первое впечатление (1-2 предложения)\n2. Вопросы и возражения (минимум 3 конкретных пункта)\n3. Оценка полноты и вывод\n\nОтвечай строго от своей роли, кратко и по делу. Не используй слова: промпт, LLM, агент, нейросеть.`;
+  const userPrompt = `ФАЗА: ${phaseLabel}\n\n${text}\n\nОтвечай строго от своей роли. Не используй слова: промпт, LLM, агент, нейросеть.`;
 
   const active = PERSONAS.filter(p => selectedPersonas.has(p.id));
-  for (const persona of active) {
+  for (let i = 0; i < active.length; i++) {
+    if (i > 0) await new Promise(r => setTimeout(r, 1000));
+    const persona = active[i];
     const typing = addTyping(persona);
     try {
       let reply;
@@ -1395,6 +1404,7 @@ async function submitAuth() {
     document.getElementById('auth-password').value = '';
     updateUserChip();
     applyAdminVisibility(data.role);
+    await loadAndApplyPrompts();
     loadLastSession();
   } catch {
     errEl.textContent = 'Ошибка сети';
@@ -1404,7 +1414,7 @@ async function submitAuth() {
 
 function applyAdminVisibility(role) {
   const isAdmin = role === 'admin';
-  document.getElementById('settings-btn').hidden = !isAdmin;
+  document.getElementById('settings-btn').hidden = false;
   document.getElementById('mock-field').hidden = !isAdmin;
 }
 
@@ -1541,6 +1551,19 @@ async function handleFileUpload(input) {
   }
 }
 
+// ── Prompts ────────────────────────────────────────────
+async function loadAndApplyPrompts() {
+  try {
+    const res = await fetch('/api/prompts', { headers: authHeaders() });
+    if (!res.ok) return;
+    const { overrides, defaults } = await res.json();
+    PERSONAS.forEach(p => {
+      if (overrides[p.id]) { p.prompt = overrides[p.id].prompt; }
+      else if (defaults[p.id]) { p.prompt = defaults[p.id].prompt; }
+    });
+  } catch {}
+}
+
 // ── Init ───────────────────────────────────────────────
 const token = getToken();
 if (!token) {
@@ -1549,7 +1572,7 @@ if (!token) {
   currentUser = localStorage.getItem('username') || '';
   updateUserChip();
   applyAdminVisibility(localStorage.getItem('role'));
-  loadLastSession();
+  loadAndApplyPrompts().then(() => loadLastSession());
 }
 
 updateApiIndicator();

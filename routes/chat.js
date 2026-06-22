@@ -44,11 +44,11 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    let result = await callOpenRouter(messages, temperature);
-
-    if (result.status === 429) {
-      await new Promise(r => setTimeout(r, 2000));
+    let result;
+    for (let attempt = 0; attempt < 4; attempt++) {
       result = await callOpenRouter(messages, temperature);
+      if (result.status !== 429) break;
+      await new Promise(r => setTimeout(r, (attempt + 1) * 4000));
     }
 
     console.log(`[OpenRouter] model=${MODEL} status=${result.status}`);

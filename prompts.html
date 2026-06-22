@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Промпты · CAISDEV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+
+  :root {
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'IBM Plex Sans', sans-serif;
+    --bg: #f4f4f4;
+    --surface: #ffffff;
+    --header-bg: #402781;
+    --border: #e0e0e0;
+    --text: #161616;
+    --text-muted: #525252;
+    --text-hint: #a8a8a8;
+    --accent: #7949f4;
+    --accent-hover: #6229d4;
+    --accent-light: #e8daff;
+    --accent-subtle: #f3eeff;
+    --green: #24a148;
+    --green-light: #defbe6;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --card-shadow: 0 1px 3px rgba(22,22,22,0.08), 0 0 0 1px rgba(22,22,22,0.06);
+  }
+
+  body {
+    font-family: var(--font-secondary);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 140%;
+    min-height: 100vh;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 52px;
+    background: var(--header-bg);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 12px; }
+
+  .back-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.1);
+    border: none; border-radius: var(--radius-sm);
+    color: #fff; cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.2); }
+
+  .header-title {
+    font-family: var(--font-primary);
+    font-size: 14px; font-weight: 600;
+    color: #fff; letter-spacing: 0.02em;
+  }
+
+  .admin-badge {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    padding: 2px 8px; border-radius: 100px;
+    background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8);
+  }
+
+  .publish-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: var(--radius-sm);
+    color: #fff; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: var(--font-secondary);
+    transition: background 0.15s;
+  }
+  .publish-btn:hover { background: rgba(255,255,255,0.25); }
+  .publish-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .page { max-width: 960px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  .page-hint {
+    font-size: 13px; color: var(--text-muted);
+    margin-bottom: 24px; line-height: 1.6;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--card-shadow);
+    padding: 18px 20px 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+
+  .card-head {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .p-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+
+  .card-name {
+    font-size: 13px; font-weight: 600; flex: 1;
+  }
+
+  .source-badge {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+    padding: 2px 8px; border-radius: 100px;
+  }
+  .source-badge.personal { background: var(--accent-light); color: var(--accent); }
+  .source-badge.global   { background: var(--green-light); color: var(--green); }
+  .source-badge.default  { background: #f0f0f0; color: var(--text-hint); }
+
+  textarea {
+    width: 100%; resize: vertical; min-height: 120px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-secondary);
+    font-size: 13px; line-height: 1.55; color: var(--text);
+    background: var(--bg);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  textarea:focus { border-color: var(--accent); background: #fff; }
+  textarea.dirty { border-color: #f59e0b; }
+
+  .card-actions { display: flex; gap: 8px; }
+
+  .btn-save {
+    padding: 7px 16px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: var(--font-secondary);
+    transition: background 0.15s;
+  }
+  .btn-save:hover { background: var(--accent-hover); }
+  .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-reset {
+    padding: 7px 14px;
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px; cursor: pointer;
+    font-family: var(--font-secondary);
+    transition: all 0.15s;
+  }
+  .btn-reset:hover { border-color: #999; color: var(--text); }
+  .btn-reset:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #161616; color: #fff;
+    padding: 10px 20px; border-radius: var(--radius-sm);
+    font-size: 13px; pointer-events: none;
+    opacity: 0; transition: opacity 0.2s;
+    z-index: 100; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+  #toast.error { background: #da1e28; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <a href="/" class="back-btn" title="Назад">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+    </a>
+    <span class="header-title">Промпты персон</span>
+    <span class="admin-badge" id="admin-badge" hidden>ADMIN</span>
+  </div>
+  <button class="publish-btn" id="publish-btn" hidden onclick="publishAll()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/>
+    </svg>
+    Опубликовать для всех
+  </button>
+</header>
+
+<div class="page">
+  <p class="page-hint">
+    Здесь можно изменить поведение каждой персоны под свои задачи. Изменения применяются только к твоим сессиям.
+    <span id="admin-hint" hidden> Как администратор, ты можешь опубликовать свои правки как глобальные дефолты для всех пользователей.</span>
+  </p>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const PERSONAS = [
+  {id:"hrd_l", label:"HRD, крупный бизнес", short:"ХД", bg:"#dbeafe", color:"#1e40af"},
+  {id:"hrd_s", label:"HRD, малый бизнес",   short:"ХД", bg:"#dcfce7", color:"#15803d"},
+  {id:"cb",    label:"Специалист C&B",        short:"CB", bg:"#fef9c3", color:"#854d0e"},
+  {id:"ceo",   label:"Генеральный директор",  short:"ГД", bg:"#fee2e2", color:"#991b1b"},
+  {id:"corp",  label:"Директор по обучению",  short:"ДО", bg:"#ede9fe", color:"#5b21b6"},
+  {id:"ciso",  label:"Руководитель СБ",       short:"СБ", bg:"#fce7f3", color:"#9d174d"},
+  {id:"dept",  label:"Руководитель подразделения", short:"РП", bg:"#d1fae5", color:"#065f46"},
+  {id:"cfo",   label:"CFO",                   short:"CF", bg:"#f3f4f6", color:"#374151"},
+  {id:"cio",   label:"CIO",                   short:"CI", bg:"#fce7f3", color:"#7c3aed"},
+  {id:"emp",   label:"Сотрудник",             short:"СО", bg:"#e5e7eb", color:"#374151"},
+];
+
+const DEFAULTS = {
+  hrd_l: "Ты HRD производственной компании на 1200 человек. 18 лет в HR, прошла через три реорганизации и внедрение двух систем, которые в итоге никто не использовал. Данные сейчас живут в 4 разных местах — никто не видит полной картины. Не веришь красивым презентациям. Если что-то звучит размыто — скажешь прямо. Тебя особенно беспокоит, как это работает для производственников без корпоративной почты, и кто будет отвечать за актуальность данных через год.",
+  hrd_s: "Ты единственный HR в IT-компании на 90 человек. Ведёшь всё сам: рекрутинг, онбординг, увольнения. Инструменты — Google Таблицы и Telegram. Ненавидишь энтерпрайзную бюрократию и всё, что требует ИТ-поддержки (которой у тебя нет). Говоришь быстро и прямо, и если что-то кажется лишним — отказываешься сразу.",
+  cb:    "Ты специалист C&B в ритейле, пришла из бухгалтерии. 7 лет сводишь данные между 1С и Excel вручную — из-за этого бывают ошибки в расчётах. Любую систему оцениваешь по одному критерию: где формула, кто её утверждает, есть ли аудиторский след. Если в документе есть цифра без источника — ты это заметишь первой и спросишь напрямую.",
+  ceo:   "Ты генеральный директор строительной компании на 400 человек. Слышал уже три питча про 'трансформацию HR' — ни один не дал измеримого результата. Не читаешь длинные описания — смотришь на первый абзац и цифры. Тебя интересует одно: сколько стоит, через сколько окупится и что ты теряешь если не внедришь. Если ответа нет — разговор закончен.",
+  corp:  "Ты директор корпоративного университета в банке. Главная боль: обучение и оценка живут отдельно — не видно, влияет ли обучение на реальные результаты. Хочешь единую систему, но боишься снова получить инструмент без методологии. Копаешься в деталях: как компетенции привязаны к бизнес-результатам, кто настраивает треки, видит ли руководитель ИПР своего сотрудника.",
+  ciso:  "Ты руководитель службы безопасности в финансовой компании. Недавно прошли болезненный аудит по 152-ФЗ. Любое новое ПО — потенциальный вектор атаки, пока не доказано обратное. Не веришь словам 'соответствует требованиям' без документов (DPIA, сертификаты). Первые вопросы всегда: где физически хранятся данные, кто видит персданные, что происходит при утечке.",
+  dept:  "Ты руководитель логистического отдела, у тебя 45 человек. HR для тебя — это в основном бюрократия и письма туда-обратно. Любую систему оцениваешь по одному: сколько времени это займёт у тебя лично. Если не интуитивно с первого взгляда — учиться не будешь. Тебе не нужна аналитика по всей компании — нужно видеть только своих.",
+  cfo:   "Ты финансовый директор производственной компании. Контролируешь ФОТ и бюджет на обучение. Любое решение — это TCO на 3 года: лицензии, внедрение, поддержка, скрытые расходы на обучение сотрудников. Если нет сценария окупаемости с цифрами — разговор не начинается. Также интересует: как данные из системы попадают в финансовую отчётность и кто несёт ответственность за расхождения.",
+  cio:   "Ты CIO в телекоме. Устал от точечных систем, которые 'легко интегрируются', а потом требуют полгода поддержки. Текущий стек: 1С, SAP, Microsoft 365 с Azure AD. Каждое новое ПО — это SSO, API-документация, SLA и вопрос: кто будет это администрировать если вендор исчезнет. Не доверяешь фразе 'легко интегрируется' — хочешь видеть конкретику.",
+  emp:   "Ты менеджер по продажам в e-commerce. Работаешь в CRM и Telegram, новые корпоративные системы воспринимаешь как 'опять что-то заставят заполнять'. Оцениваешь через здравый смысл: понятно без инструкции? зачем мне это? сколько займёт? можно с телефона? Говоришь без корпоративного языка, иногда с иронией. Если что-то непонятно — скажешь прямо, не будешь делать вид что понял.",
+};
+
+const token = localStorage.getItem('jwt');
+const role = localStorage.getItem('role');
+
+if (!token) { location.href = '/'; }
+
+if (role === 'admin') {
+  document.getElementById('admin-badge').hidden = false;
+  document.getElementById('admin-hint').hidden = false;
+  document.getElementById('publish-btn').hidden = false;
+}
+
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+}
+
+let toastTimer;
+function showToast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 2500);
+}
+
+function sourceLabel(source) {
+  if (source === 'personal') return ['personal', 'Личный'];
+  if (source === 'global')   return ['global',   'Глобальный'];
+  return ['default', 'По умолчанию'];
+}
+
+let serverData = { overrides: {}, defaults: {} };
+
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  PERSONAS.forEach(p => {
+    const override = serverData.overrides[p.id];
+    const def = serverData.defaults[p.id];
+    const current = override?.prompt ?? def?.prompt ?? DEFAULTS[p.id];
+    const source = override ? 'personal' : def ? 'global' : 'default';
+    const [cls, lbl] = sourceLabel(source);
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="p-dot" style="background:${p.bg};color:${p.color};">${p.short}</div>
+        <span class="card-name">${p.label}</span>
+        <span class="source-badge ${cls}" id="badge-${p.id}">${lbl}</span>
+      </div>
+      <textarea id="ta-${p.id}" spellcheck="false">${escHtml(current)}</textarea>
+      <div class="card-actions">
+        <button class="btn-save" onclick="savePrompt('${p.id}')">Сохранить</button>
+        <button class="btn-reset" onclick="resetPrompt('${p.id}')" ${source === 'default' ? 'disabled' : ''} id="reset-${p.id}">Сбросить</button>
+      </div>`;
+
+    const ta = card.querySelector('textarea');
+    ta.addEventListener('input', () => ta.classList.add('dirty'));
+
+    grid.appendChild(card);
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function savePrompt(personaId) {
+  const ta = document.getElementById('ta-' + personaId);
+  const prompt = ta.value.trim();
+  if (!prompt) return showToast('Промпт не может быть пустым', true);
+
+  const btn = ta.closest('.card').querySelector('.btn-save');
+  btn.disabled = true; btn.textContent = 'Сохраняю...';
+
+  try {
+    const res = await fetch(`/api/prompts/${personaId}`, {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: JSON.stringify({ prompt }),
+    });
+    if (!res.ok) throw new Error();
+    serverData.overrides[personaId] = { prompt, source: 'personal' };
+    ta.classList.remove('dirty');
+    updateBadge(personaId, 'personal');
+    document.getElementById('reset-' + personaId).disabled = false;
+    showToast('Сохранено');
+  } catch {
+    showToast('Ошибка сохранения', true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Сохранить';
+  }
+}
+
+async function resetPrompt(personaId) {
+  const btn = document.getElementById('reset-' + personaId);
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/prompts/${personaId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error();
+    delete serverData.overrides[personaId];
+
+    const def = serverData.defaults[personaId];
+    const newText = def?.prompt ?? DEFAULTS[personaId];
+    const ta = document.getElementById('ta-' + personaId);
+    ta.value = newText;
+    ta.classList.remove('dirty');
+    const newSource = def ? 'global' : 'default';
+    updateBadge(personaId, newSource);
+    if (newSource === 'default') btn.disabled = true;
+    showToast('Сброшено до ' + (def ? 'глобального' : 'дефолтного'));
+  } catch {
+    showToast('Ошибка сброса', true);
+    btn.disabled = false;
+  }
+}
+
+async function publishAll() {
+  const btn = document.getElementById('publish-btn');
+  btn.disabled = true;
+
+  const hasOverrides = Object.keys(serverData.overrides).length > 0;
+  if (!hasOverrides) {
+    showToast('Нет личных правок для публикации', true);
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/prompts/publish', {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({}),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    Object.entries(serverData.overrides).forEach(([id, v]) => {
+      serverData.defaults[id] = { prompt: v.prompt, source: 'global' };
+    });
+
+    showToast(`Опубликовано ${data.published} промптов для всех`);
+  } catch (e) {
+    showToast(e.message || 'Ошибка публикации', true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function updateBadge(personaId, source) {
+  const [cls, lbl] = sourceLabel(source);
+  const badge = document.getElementById('badge-' + personaId);
+  badge.className = 'source-badge ' + cls;
+  badge.textContent = lbl;
+}
+
+async function init() {
+  try {
+    const res = await fetch('/api/prompts', { headers: authHeaders() });
+    if (res.status === 401) { location.href = '/'; return; }
+    serverData = await res.json();
+  } catch {}
+  renderGrid();
+}
+
+init();
+</script>
+</body>
+</html>
