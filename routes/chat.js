@@ -17,11 +17,11 @@ if (parsedUrl.protocol !== "https:") {
   process.exit(1);
 }
 
-async function callAI(messages, temperature) {
+async function callAI(messages, temperature, max_tokens = MAX_TOKENS) {
   const payload = {
     model: MODEL,
     messages,
-    max_tokens: MAX_TOKENS,
+    max_tokens,
     ...(temperature !== undefined ? { temperature } : {}),
   };
   return new Promise((resolve, reject) => {
@@ -50,15 +50,16 @@ async function callAI(messages, temperature) {
 }
 
 router.post("/", async (req, res) => {
-  const { messages, temperature } = req.body;
+  const { messages, temperature, maxTokens } = req.body;
   if (!Array.isArray(messages)) {
     return res.status(400).json({ error: "messages must be an array" });
   }
+  const tokenLimit = maxTokens ? Math.min(Number(maxTokens), 8000) : MAX_TOKENS;
 
   try {
     let result;
     for (let attempt = 0; attempt < 3; attempt++) {
-      result = await callAI(messages, temperature);
+      result = await callAI(messages, temperature, tokenLimit);
       if (result.status !== 429) break;
       await new Promise(r => setTimeout(r, (attempt + 1) * 3000));
     }

@@ -397,10 +397,10 @@
     transition: background 0.15s;
   }
   .insights-regen:hover { background: var(--accent-light); }
-  .insights-body { font-size: 13px; line-height: 1.7; color: var(--text); }
+  .insights-body { font-size: 13px; line-height: 1.7; color: var(--text); overflow-wrap: break-word; word-break: break-word; min-width: 0; }
   .insights-body p { margin: 0 0 8px; }
-  .insights-body ul { padding-left: 18px; margin: 0 0 12px; }
-  .insights-body li { margin-bottom: 3px; }
+  .insights-body ul, .insights-body ol { padding-left: 18px; margin: 0 0 12px; }
+  .insights-body li { margin-bottom: 3px; overflow-wrap: break-word; }
   .insights-body strong { color: var(--accent); }
 
   /* ── Empty state ── */
@@ -476,6 +476,7 @@
     font-size: 13px; line-height: 1.75;
     background: var(--surface);
     box-shadow: var(--card-shadow);
+    overflow-wrap: break-word; word-break: break-word; min-width: 0;
   }
   .msg-bubble p { margin: 0 0 8px; }
   .msg-bubble p:last-child { margin-bottom: 0; }
@@ -1308,7 +1309,8 @@ async function generateInsights() {
           { role: "system", content: systemPrompt },
           { role: "user", content: lines.join('\n\n') }
         ],
-        temperature: 0.4
+        temperature: 0.4,
+        maxTokens: 4000
       })
     });
     const data = await apiRes.json();
