@@ -4,7 +4,7 @@ import https from "https";
 const router = Router();
 
 const MODEL = process.env.AI_MODEL || "gemini-2.5-flash";
-const MAX_TOKENS = 1500;
+const MAX_TOKENS = 3000;
 const API_URL = process.env.AI_API_URL;
 const PROXY_KEY = process.env.AI_PROXY_KEY;
 
@@ -58,10 +58,10 @@ router.post("/", async (req, res) => {
 
   try {
     let result;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 5; attempt++) {
       result = await callAI(messages, temperature, tokenLimit);
-      if (result.status !== 429) break;
-      await new Promise(r => setTimeout(r, (attempt + 1) * 3000));
+      if (result.status !== 429 && result.status !== 503) break;
+      await new Promise(r => setTimeout(r, (attempt + 1) * 6000));
     }
 
     console.log(`[AI] model=${MODEL} status=${result.status}`);
