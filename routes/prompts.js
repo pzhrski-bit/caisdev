@@ -8,9 +8,13 @@ router.get("/", async (req, res) => {
     db.query("SELECT persona_id, prompt FROM prompt_overrides WHERE user_id = $1", [req.user.id]),
     db.query("SELECT persona_id, prompt FROM prompt_defaults"),
   ]);
+  const overridesObj = Object.fromEntries(overrides.rows.map(r => [r.persona_id, { prompt: r.prompt, source: "personal" }]));
+  const defaultsObj = Object.fromEntries(defaults.rows.map(r => [r.persona_id, { prompt: r.prompt, source: "global" }]));
+  const productContext = overridesObj['_context']?.prompt || defaultsObj['_context']?.prompt || '';
   res.json({
-    overrides: Object.fromEntries(overrides.rows.map(r => [r.persona_id, { prompt: r.prompt, source: "personal" }])),
-    defaults: Object.fromEntries(defaults.rows.map(r => [r.persona_id, { prompt: r.prompt, source: "global" }])),
+    overrides: overridesObj,
+    defaults: defaultsObj,
+    productContext,
   });
 });
 

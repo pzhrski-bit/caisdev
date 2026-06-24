@@ -276,9 +276,45 @@ function sourceLabel(source) {
 
 let serverData = { overrides: {}, defaults: {} };
 
+const CONTEXT_PERSONA = {id:'_context', label:'Контекст продукта (дефолт для всех пользователей)', short:'КТ', bg:'#fff7ed', color:'#9a3412'};
+const KTEAM_DEFAULT = `K-Team — HRM-система на базе Bitrix24 для компаний 1000+ сотрудников.
+
+Две редакции:
+• K-Team Intranet: новости, справочник сотрудников, личный кабинет (заявки/отпуска/командировки/ДМС), вакансии, офисная карта, бронирование переговорных, FAQ, банк идей, доска объявлений, наставничество (бадди), обратная связь, медиагалерея, статистика посещаемости.
+• K-Team HRM (Intranet + доп. модули): оценка 360°, KPI с бизнес-процессами, корпоративное обучение (курсы → главы → уроки, тесты, SCORM, учебные группы), адаптация новых сотрудников с чат-ботом, база знаний Вики (жизненный цикл статей, глоссарий, CoPilot), магазин подарков с виртуальной валютой и баллами за активность.`;
+
 function renderGrid() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
+
+  if (role === 'admin') {
+    const p = CONTEXT_PERSONA;
+    const override = serverData.overrides[p.id];
+    const def = serverData.defaults[p.id];
+    const current = override?.prompt ?? def?.prompt ?? KTEAM_DEFAULT;
+    const source = override ? 'personal' : def ? 'global' : 'default';
+    const [cls, lbl] = sourceLabel(source);
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.gridColumn = '1 / -1';
+    card.innerHTML = `
+      <div class="card-head">
+        <div class="p-dot" style="background:${p.bg};color:${p.color};">${p.short}</div>
+        <span class="card-name">${p.label}</span>
+        <span class="source-badge ${cls}" id="badge-${p.id}">${lbl}</span>
+      </div>
+      <textarea id="ta-${p.id}" spellcheck="false" style="min-height:160px;">${escHtml(current)}</textarea>
+      <div class="card-actions">
+        <button class="btn-save" onclick="savePrompt('${p.id}')">Сохранить как личный</button>
+        <button class="btn-reset" onclick="resetPrompt('${p.id}')" ${source === 'default' ? 'disabled' : ''} id="reset-${p.id}">Сбросить</button>
+      </div>`;
+
+    const ta = card.querySelector('textarea');
+    ta.addEventListener('input', () => ta.classList.add('dirty'));
+    grid.appendChild(card);
+  }
+
   PERSONAS.forEach(p => {
     const override = serverData.overrides[p.id];
     const def = serverData.defaults[p.id];

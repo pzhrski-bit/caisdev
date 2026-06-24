@@ -318,6 +318,62 @@
   .phase-btn-desc { font-size: 11px; color: var(--text-hint); margin-top: 2px; padding-left: 22px; }
   .phase-btn.active .phase-btn-desc { color: rgba(138,63,252,0.6); }
 
+  .context-label-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .context-edit-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-hint); padding: 2px 4px;
+    border-radius: 4px; transition: color 0.1s, background 0.1s;
+    display: flex; align-items: center;
+  }
+  .context-edit-btn:hover { color: var(--accent); background: var(--accent-subtle); }
+  .context-edit-btn.active { color: var(--accent); }
+  .context-preview {
+    font-size: 11px; color: var(--text-muted);
+    background: var(--bg); border-radius: 6px;
+    padding: 5px 8px; line-height: 1.5;
+    border: 1px solid var(--border);
+    word-break: break-word;
+    cursor: pointer;
+  }
+  .context-preview.empty { color: var(--text-hint); font-style: italic; }
+  .context-preview.set { border-color: var(--accent-light); background: var(--accent-subtle); color: var(--accent); }
+  #context-panel { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+  #context-input {
+    width: 100%; resize: vertical; min-height: 80px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-secondary);
+    font-size: 12px; line-height: 1.5; color: var(--text);
+    background: var(--surface);
+    outline: none;
+  }
+  #context-input:focus { border-color: var(--accent); }
+  .context-actions { display: flex; gap: 6px; }
+  .ctx-save-btn {
+    padding: 5px 12px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    font-family: var(--font-secondary);
+    transition: background 0.15s;
+  }
+  .ctx-save-btn:hover { background: var(--accent-hover); }
+  .ctx-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ctx-reset-btn {
+    padding: 5px 10px;
+    background: transparent; color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px; cursor: pointer;
+    font-family: var(--font-secondary);
+    transition: all 0.15s;
+  }
+  .ctx-reset-btn:hover { border-color: #999; color: var(--text); }
+
   .sidebar-footer {
     margin-top: auto;
     padding-top: 12px;
@@ -930,6 +986,26 @@
     <div>
       <div class="section-label">Фаза проекта</div>
       <div class="phase-grid" id="phase-grid"></div>
+    </div>
+
+    <div>
+      <div class="context-label-row">
+        <span class="section-label" style="margin-bottom:0;">Контекст продукта</span>
+        <button class="context-edit-btn" id="context-toggle-btn" onclick="toggleContextPanel()" title="Редактировать контекст">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+      </div>
+      <div id="context-preview-el" class="context-preview empty" onclick="toggleContextPanel()">не задан</div>
+      <div id="context-panel" hidden>
+        <textarea id="context-input" placeholder="Опиши систему: разделы, кто пользуется, ключевые функции..."></textarea>
+        <div class="context-actions">
+          <button class="ctx-save-btn" onclick="saveProductContext()">Сохранить</button>
+          <button class="ctx-reset-btn" onclick="resetProductContext()">Сбросить</button>
+        </div>
+      </div>
     </div>
 
     <div class="sidebar-footer">
@@ -1637,7 +1713,10 @@ function escHtml(text) {
 }
 
 async function callDeepSeek(systemPrompt, userContent, history = []) {
-  const fullPrompt = `${systemPrompt}
+  const contextBlock = productContext
+    ? `КОНТЕКСТ СУЩЕСТВУЮЩЕГО ПРОДУКТА У КЛИЕНТА:\n${productContext}\n\n`
+    : '';
+  const fullPrompt = `${contextBlock}${systemPrompt}
 
 ФОРМАТ ОТВЕТА:
 — Реагируй исходя из своей роли и приоритетов, а не по шаблону. Не начинай с "Слушайте" или "Я уже проходил".
@@ -1840,6 +1919,7 @@ function authHeaders() {
 // ── Session save ───────────────────────────────────────
 let sessionId = null;
 let conversationHistory = {}; // { [personaId]: [{role, content}] }
+let productContext = '';
 
 async function ensureSession(phase, firstMessage) {
   if (sessionId) return sessionId;
@@ -1969,12 +2049,85 @@ async function loadAndApplyPrompts() {
   try {
     const res = await fetch('/api/prompts', { headers: authHeaders() });
     if (!res.ok) return;
-    const { overrides, defaults } = await res.json();
+    const data = await res.json();
+    const { overrides, defaults } = data;
     PERSONAS.forEach(p => {
       if (overrides[p.id]) { p.prompt = overrides[p.id].prompt; }
       else if (defaults[p.id]) { p.prompt = defaults[p.id].prompt; }
     });
+    productContext = data.productContext || '';
+    updateContextPreview();
   } catch {}
+}
+
+function updateContextPreview() {
+  const el = document.getElementById('context-preview-el');
+  if (!el) return;
+  if (productContext) {
+    el.className = 'context-preview set';
+    el.textContent = productContext.length > 70 ? productContext.slice(0, 70) + '…' : productContext;
+  } else {
+    el.className = 'context-preview empty';
+    el.textContent = 'не задан';
+  }
+}
+
+function toggleContextPanel() {
+  const panel = document.getElementById('context-panel');
+  const btn = document.getElementById('context-toggle-btn');
+  if (panel.hidden) {
+    document.getElementById('context-input').value = productContext;
+    panel.hidden = false;
+    btn.classList.add('active');
+  } else {
+    panel.hidden = true;
+    btn.classList.remove('active');
+  }
+}
+
+async function saveProductContext() {
+  const text = document.getElementById('context-input').value.trim();
+  const btn = document.querySelector('.ctx-save-btn');
+  btn.disabled = true;
+  try {
+    if (!text) {
+      await fetch('/api/prompts/_context', { method: 'DELETE', headers: authHeaders() });
+      const res = await fetch('/api/prompts', { headers: authHeaders() });
+      if (res.ok) { const d = await res.json(); productContext = d.productContext || ''; }
+    } else {
+      const res = await fetch('/api/prompts/_context', {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ prompt: text }),
+      });
+      if (!res.ok) throw new Error();
+      productContext = text;
+    }
+    updateContextPreview();
+    document.getElementById('context-panel').hidden = true;
+    document.getElementById('context-toggle-btn').classList.remove('active');
+    showToast('Контекст сохранён');
+  } catch {
+    showToast('Ошибка сохранения');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function resetProductContext() {
+  try {
+    await fetch('/api/prompts/_context', { method: 'DELETE', headers: authHeaders() });
+    const res = await fetch('/api/prompts', { headers: authHeaders() });
+    if (res.ok) {
+      const d = await res.json();
+      productContext = d.productContext || '';
+      document.getElementById('context-input').value = productContext;
+    }
+    updateContextPreview();
+    showToast('Сброшено к общему контексту');
+  } catch {
+    showToast('Ошибка сброса');
+  }
 }
 
 // ── Init ───────────────────────────────────────────────
