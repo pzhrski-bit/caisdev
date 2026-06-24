@@ -34,7 +34,7 @@ async function callAI(messages, temperature, max_tokens = MAX_TOKENS) {
       headers: {
         "Content-Type": "application/json",
         "Content-Length": Buffer.byteLength(body),
-        "X-Proxy-Auth": PROXY_KEY,
+        "Authorization": "Bearer " + PROXY_KEY,
       },
     };
 
