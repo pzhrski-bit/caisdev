@@ -372,6 +372,37 @@
     display: flex; flex-direction: column; gap: 20px;
   }
 
+  /* ── Insights card ── */
+  .insights-card {
+    background: var(--accent-subtle);
+    border: 1px solid var(--accent-light);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+  }
+  .insights-card-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 14px;
+    font-family: var(--font-primary);
+    font-size: 13px; font-weight: 600;
+    color: var(--accent);
+  }
+  .insights-card-header svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .insights-regen {
+    margin-left: auto;
+    font-size: 11px; font-weight: 500;
+    color: var(--accent);
+    background: none; border: 1px solid var(--accent-light);
+    cursor: pointer; font-family: var(--font-secondary);
+    padding: 3px 10px; border-radius: var(--radius-pill);
+    transition: background 0.15s;
+  }
+  .insights-regen:hover { background: var(--accent-light); }
+  .insights-body { font-size: 13px; line-height: 1.7; color: var(--text); }
+  .insights-body p { margin: 0 0 8px; }
+  .insights-body ul { padding-left: 18px; margin: 0 0 12px; }
+  .insights-body li { margin-bottom: 3px; }
+  .insights-body strong { color: var(--accent); }
+
   /* ── Empty state ── */
   .empty-state {
     flex: 1; display: flex; flex-direction: column;
@@ -791,6 +822,12 @@
         <div class="api-dot" id="api-status"></div>
         <span id="api-label">API не настроен</span>
       </div>
+      <button class="export-btn" id="insights-btn" onclick="generateInsights()" title="Сгенерировать итоги обсуждения" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
+        </svg>
+        Итоги
+      </button>
       <button class="export-btn" id="export-btn" onclick="exportCSV()" title="Скачать сессию как CSV" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -1146,14 +1183,91 @@ function autoResize(el) {
   updateSendBtn();
 }
 
-function syncExportBtn() {
-  document.getElementById('export-btn').hidden = !sessionId;
+let lastInsights = null;
+
+function syncHeaderBtns() {
+  const hasSession = !!sessionId;
+  document.getElementById('export-btn').hidden = !hasSession;
+  document.getElementById('insights-btn').hidden = !hasSession;
 }
 
 function startNewSession() {
   sessionId = null;
-  syncExportBtn();
+  lastInsights = null;
+  syncHeaderBtns();
   clearChat();
+}
+
+function addInsightsCard(text) {
+  const area = document.getElementById("chat-area");
+  const existing = document.getElementById("insights-card");
+  if (existing) existing.remove();
+  const card = document.createElement("div");
+  card.id = "insights-card";
+  card.className = "insights-card";
+  card.innerHTML = `
+    <div class="insights-card-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z"/>
+      </svg>
+      Итоги обсуждения
+      <button class="insights-regen" onclick="generateInsights()">Обновить</button>
+    </div>
+    <div class="insights-body">${marked.parse(text)}</div>
+  `;
+  area.appendChild(card);
+  area.scrollTop = area.scrollHeight;
+}
+
+async function generateInsights() {
+  if (!sessionId) return;
+  const btn = document.getElementById('insights-btn');
+  const regenBtn = document.querySelector('.insights-regen');
+  [btn, regenBtn].forEach(b => { if (b) { b.style.opacity = '0.6'; b.disabled = true; } });
+
+  try {
+    const res = await fetch(`/api/sessions/${sessionId}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error('Не удалось загрузить сессию');
+    const session = await res.json();
+    const phase = PHASES.find(p => p.id === session.phase)?.label || '';
+    const lines = (session.messages || []).map(m => {
+      const name = m.persona_id === 'user' ? 'Пользователь'
+        : (PERSONAS.find(p => p.id === m.persona_id)?.label || m.persona_id);
+      return `${name}: ${m.content}`;
+    });
+
+    const systemPrompt = `Ты аналитик продуктовой команды. Ниже — запись обсуждения с симулированными стейкхолдерами (фаза: ${phase}).
+
+Синтезируй ключевые выводы в 4 блоках:
+
+**Ключевые риски** — что несколько участников отметили как проблему или угрозу
+**Консенсус** — в чём участники сошлись (позитивное или критическое)
+**Открытые вопросы** — что осталось без ответа и требует уточнения
+**Рекомендации** — конкретные следующие шаги
+
+В каждом блоке 3–5 пунктов маркированного списка. Пиши конкретно, ссылаясь на реальные высказывания участников. Без общих слов. На русском.`;
+
+    const apiRes = await fetch("/api/chat", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: lines.join('\n\n') }
+        ],
+        temperature: 0.4
+      })
+    });
+    const data = await apiRes.json();
+    if (!apiRes.ok) throw new Error(data?.error?.message || data?.error || `HTTP ${apiRes.status}`);
+    const text = sanitizeAiText(data.choices?.[0]?.message?.content || '');
+    lastInsights = text;
+    addInsightsCard(text);
+  } catch (e) {
+    alert('Не удалось сгенерировать итоги: ' + e.message);
+  } finally {
+    [btn, regenBtn].forEach(b => { if (b) { b.style.opacity = ''; b.disabled = false; } });
+  }
 }
 
 async function exportCSV() {
@@ -1183,6 +1297,12 @@ async function exportCSV() {
         ? 'Пользователь'
         : (PERSONAS.find(p => p.id === m.persona_id)?.label || m.persona_id);
       rows.push([esc(name), esc(m.content)]);
+    }
+
+    if (lastInsights) {
+      rows.push(['', '']);
+      rows.push([esc('ИТОГИ ОБСУЖДЕНИЯ'), esc('')]);
+      rows.push([esc(''), esc(lastInsights)]);
     }
 
     const csv = '﻿' + rows.map(r => r.join(',')).join('\r\n');
@@ -1445,7 +1565,8 @@ function logout() {
   localStorage.removeItem('role');
   currentUser = null;
   sessionId = null;
-  syncExportBtn();
+  syncHeaderBtns();
+  lastInsights = null;
   selectedPersonas.clear();
   selectedPhase = null;
   PERSONAS.forEach(p => document.getElementById('pi-' + p.id)?.classList.remove('selected'));
@@ -1476,7 +1597,7 @@ async function ensureSession(phase, firstMessage) {
     });
     const data = await res.json();
     sessionId = data.id;
-    syncExportBtn();
+    syncHeaderBtns();
   } catch { /* non-critical */ }
   return sessionId;
 }
@@ -1507,7 +1628,8 @@ async function openSession(id) {
     if (!res.ok) return;
     const session = await res.json();
     sessionId = session.id;
-    syncExportBtn();
+    lastInsights = null;
+    syncHeaderBtns();
 
     if (session.phase && PHASES.some(p => p.id === session.phase)) selectPhase(session.phase);
 
