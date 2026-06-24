@@ -29,6 +29,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/api/model', (req, res) => {
+  res.json({ model: process.env.AI_MODEL || 'unknown' });
+});
+
 app.use("/api/auth", authRouter);
 app.use("/api/chat", requireAuth, chatRouter);
 app.use("/api/sessions", requireAuth, sessionsRouter);

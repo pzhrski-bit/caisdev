@@ -1241,7 +1241,14 @@ function updateApiIndicator() {
   } else {
     indicator.classList.add("ok");
     statusDot.style.background = "";
-    label.textContent = "Gemini 2.5 Flash";
+    label.textContent = '...';
+    fetch('/api/model').then(r => r.json()).then(d => {
+      const m = d.model || '';
+      if (m.includes('gemini-2.0-flash')) label.textContent = 'Gemini 2.0 Flash';
+      else if (m.includes('gemini-2.5-flash')) label.textContent = 'Gemini 2.5 Flash';
+      else if (m.includes('llama-3.3-70b')) label.textContent = 'Llama 3.3 70B';
+      else label.textContent = m.split('/').pop().replace(/[-_](instruct|preview|exp).*$/, '') || 'AI';
+    }).catch(() => { label.textContent = 'AI'; });
   }
 }
 
@@ -1346,6 +1353,8 @@ async function loadSharedSession(token) {
 function startNewSession() {
   sessionId = null;
   lastInsights = null;
+  conversationHistory = {};
+  localStorage.setItem('sessionCleared', '1');
   syncHeaderBtns();
   clearChat();
 }
@@ -1399,21 +1408,27 @@ async function generateInsights() {
 
 В каждом блоке 3–5 пунктов маркированного списка. Пиши конкретно, ссылаясь на реальные высказывания участников. Без общих слов. На русском.`;
 
+    let sessionContent = lines.join('\n\n');
+    if (sessionContent.length > 15000) sessionContent = sessionContent.slice(0, 15000) + '\n\n[...обрезано]';
+
     const apiRes = await fetch("/api/chat", {
       method: "POST",
       headers: authHeaders(),
       body: JSON.stringify({
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: lines.join('\n\n') }
+          { role: "user", content: sessionContent }
         ],
         temperature: 0.4,
         maxTokens: 4000
       })
     });
     const data = await apiRes.json();
+    console.log('[insights] status', apiRes.status, data);
     if (!apiRes.ok) throw new Error(data?.error?.message || data?.error || `HTTP ${apiRes.status}`);
-    const text = sanitizeAiText(data.choices?.[0]?.message?.content || '');
+    const raw = data.choices?.[0]?.message?.content;
+    if (!raw) throw new Error(data?.error?.message || data?.error || 'Пустой ответ от модели');
+    const text = sanitizeAiText(raw);
     lastInsights = text;
     addInsightsCard(text);
   } catch (e) {
@@ -1591,7 +1606,7 @@ async function expandPersona(persona, originalReply, capturedContent, btn) {
 
 СТИЛЬ ОТВЕТА:
 Говори как живой человек — без нумерации, заголовков и шаблонных блоков. Это живая реакция, не отчёт.
-Отвечай на русском. Развёрнуто — 300–500 слов.`;
+КРИТИЧНО: пиши ТОЛЬКО на русском языке — никаких иностранных слов или иероглифов. Развёрнуто — 300–500 слов.`;
     const messages = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: capturedContent },
@@ -1621,13 +1636,13 @@ function escHtml(text) {
   return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
-async function callDeepSeek(systemPrompt, userContent) {
+async function callDeepSeek(systemPrompt, userContent, history = []) {
   const fullPrompt = `${systemPrompt}
 
 СТИЛЬ ОТВЕТА:
 Говори от первого лица и из своего опыта — что ты уже видел в похожих ситуациях, как это работало или не работало у тебя или коллег. Рассуждай вслух, задавай уточняющие вопросы, делись личным взглядом.
 Это не оценка проекта — это живой разговор. Если есть сомнения — объясни через конкретный кейс или прецедент из своей практики, а не через абстрактные требования.
-Не делай списки и заголовки. Отвечай на русском. 100–200 слов.`;
+Не делай списки и заголовки. КРИТИЧНО: пиши ТОЛЬКО на русском языке — никаких английских слов, иероглифов, арабской вязи или символов других алфавитов. 100–200 слов.`;
 
   const res = await fetch("/api/chat", {
     method: "POST",
@@ -1635,6 +1650,7 @@ async function callDeepSeek(systemPrompt, userContent) {
     body: JSON.stringify({
       messages: [
         { role: "system", content: fullPrompt },
+        ...history,
         { role: "user", content: userContent }
       ],
       temperature: 0.8
@@ -1695,6 +1711,9 @@ async function sendMessage() {
   }
 
   const capturedContent = userContent;
+  const historyUserContent = snap?.type === 'image'
+    ? `[изображение: ${snap?.name}]`
+    : typeof capturedContent === 'string' ? capturedContent : '';
   const active = PERSONAS.filter(p => selectedPersonas.has(p.id));
   for (let i = 0; i < active.length; i++) {
     if (i > 0) await new Promise(r => setTimeout(r, 4000));
@@ -1706,11 +1725,15 @@ async function sendMessage() {
         await new Promise(r => setTimeout(r, 700 + Math.random() * 500));
         reply = mockResponse(persona);
       } else {
-        reply = await callDeepSeek(persona.prompt, capturedContent);
+        const history = conversationHistory[persona.id] || [];
+        reply = await callDeepSeek(persona.prompt, capturedContent, history);
       }
       document.getElementById("chat-area").removeChild(typing);
       addPersonaMsg(persona, reply, capturedContent);
       await saveMessage(sid, persona.id, reply);
+      if (!conversationHistory[persona.id]) conversationHistory[persona.id] = [];
+      conversationHistory[persona.id].push({ role: 'user', content: historyUserContent });
+      conversationHistory[persona.id].push({ role: 'assistant', content: reply });
     } catch (e) {
       document.getElementById("chat-area").removeChild(typing);
       addPersonaMsg(persona, "⚠ Ошибка: " + e.message);
@@ -1815,9 +1838,11 @@ function authHeaders() {
 
 // ── Session save ───────────────────────────────────────
 let sessionId = null;
+let conversationHistory = {}; // { [personaId]: [{role, content}] }
 
 async function ensureSession(phase, firstMessage) {
   if (sessionId) return sessionId;
+  localStorage.removeItem('sessionCleared');
   try {
     const res = await fetch('/api/sessions', {
       method: 'POST',
@@ -1843,6 +1868,7 @@ async function saveMessage(sid, persona_id, content) {
 }
 
 async function loadLastSession() {
+  if (localStorage.getItem('sessionCleared') === '1') return;
   try {
     const res = await fetch('/api/sessions', { headers: authHeaders() });
     if (!res.ok) return;
@@ -1868,6 +1894,19 @@ async function openSession(id) {
     });
 
     clearChat();
+
+    conversationHistory = {};
+    let lastUserContent = null;
+    for (const m of session.messages) {
+      if (m.persona_id === 'user') {
+        lastUserContent = m.content;
+      } else if (lastUserContent) {
+        if (!conversationHistory[m.persona_id]) conversationHistory[m.persona_id] = [];
+        conversationHistory[m.persona_id].push({ role: 'user', content: lastUserContent });
+        conversationHistory[m.persona_id].push({ role: 'assistant', content: m.content });
+      }
+    }
+
     const ph = PHASES.find(p => p.id === session.phase);
     if (ph && session.messages.length) addDivider("Обсуждение · " + ph.label.toUpperCase());
     for (const m of session.messages) {
