@@ -5,6 +5,7 @@ RUN npm ci --omit=dev
 COPY server.js .
 COPY hrm_review.html .
 COPY prompts.html .
+COPY about.html .
 COPY db ./db
 COPY middleware ./middleware
 COPY routes ./routes
