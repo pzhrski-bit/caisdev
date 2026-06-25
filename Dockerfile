@@ -6,6 +6,7 @@ COPY server.js .
 COPY hrm_review.html .
 COPY prompts.html .
 COPY about.html .
+COPY assets ./assets
 COPY db ./db
 COPY middleware ./middleware
 COPY routes ./routes
