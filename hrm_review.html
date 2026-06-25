@@ -1381,12 +1381,29 @@ async function shareSession() {
       method: 'POST',
       headers: authHeaders()
     });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Server error');
+    }
     const data = await res.json();
     const url = window.location.origin + window.location.pathname + data.url;
-    await navigator.clipboard.writeText(url);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for HTTP contexts where clipboard API is unavailable
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
     showToast('Ссылка скопирована');
-  } catch {
-    showToast('Не удалось создать ссылку');
+  } catch (e) {
+    showToast('Не удалось создать ссылку: ' + (e.message || e));
   }
 }
 

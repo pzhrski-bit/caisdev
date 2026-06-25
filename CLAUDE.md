@@ -94,6 +94,10 @@ shares    — id, session_id, token, created_at
 - ✅ Автодеплой: push в main → CI → VPS
 - ✅ Docker + CI/CD (GitHub Actions → ghcr.io)
 - ✅ Resume last session при логине
+- ✅ Мультитёрн контекст: `conversationHistory[personaId]` — история накапливается и восстанавливается при открытии сессии
+- ✅ Очистка диалога без восстановления при перезагрузке (`localStorage.sessionCleared`)
+- ✅ Динамическое отображение модели в хедере (GET `/api/model`)
+- ✅ Контекст продукта: пользователь задаёт описание своей системы в сайдбаре, оно вставляется первым блоком во все системные промпты (`КОНТЕКСТ СУЩЕСТВУЮЩЕГО ПРОДУКТА У КЛИЕНТА`). Хранится как `persona_id = '_context'` в таблицах `prompt_overrides` / `prompt_defaults`. Admin публикует K-Team дефолт через prompts.html.
 
 ## Бэклог (приоритет по порядку)
 
@@ -110,6 +114,11 @@ shares    — id, session_id, token, created_at
 - HRM general (текущий, 10 персон)
 - KPI module (3 персоны, в knowledge_base/02_personas/)
 - HireFlow/ATS (3 персоны, в knowledge_base/02_personas/)
+
+### 4. Наполнить K-Team контекст по умолчанию
+- Admin логинится → prompts.html → карточка «Контекст продукта» уже есть
+- Вставить готовый текст из DEPLOY.md или плана и нажать «Сохранить» → «Опубликовать для всех»
+- Готовый текст: см. константу `KTEAM_DEFAULT` в prompts.html
 
 ## Деплой
 
