@@ -40,8 +40,10 @@ app.use("/api/upload", requireAuth, uploadRouter);
 app.use("/api/prompts", requireAuth, promptsRouter);
 app.get("/api/share/:token", getSharedSession);
 
-app.use(express.static(__dirname));
 app.get("/prompts", (req, res) => res.sendFile(path.join(__dirname, "prompts.html")));
+app.get("/about", (req, res) => res.sendFile(path.join(__dirname, "about.html")));
+app.use(express.static(__dirname));
+app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "hrm_review.html")));
 
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
